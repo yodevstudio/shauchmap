@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#1A1A1A"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="8dp">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Nearest Loos"
+            android:textColor="#1D9E75"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+        <TextView
+            android:id="@+id/widget_last_updated"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Waiting for update..."
+            android:textColor="#8E8E93"
+            android:textSize="10sp" />
+    </LinearLayout>
+
+    <!-- Loo 1 -->
+    <LinearLayout
+        android:id="@+id/widget_row_1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="4dp">
+        <TextView
+            android:id="@+id/widget_name_1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Locating..."
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:maxLines="1"
+            android:ellipsize="end" />
+        <TextView
+            android:id="@+id/widget_dist_1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textColor="#8E8E93"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <!-- Loo 2 -->
+    <LinearLayout
+        android:id="@+id/widget_row_2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="4dp">
+        <TextView
+            android:id="@+id/widget_name_2"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text=""
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:maxLines="1"
+            android:ellipsize="end" />
+        <TextView
+            android:id="@+id/widget_dist_2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textColor="#8E8E93"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <!-- Loo 3 -->
+    <LinearLayout
+        android:id="@+id/widget_row_3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="8dp">
+        <TextView
+            android:id="@+id/widget_name_3"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text=""
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:maxLines="1"
+            android:ellipsize="end" />
+        <TextView
+            android:id="@+id/widget_dist_3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textColor="#8E8E93"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <!-- Button -->
+    <TextView
+        android:id="@+id/widget_btn_emergency"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#1D9E75"
+        android:text="Find loo now"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:padding="10dp" />
+
+</LinearLayout>

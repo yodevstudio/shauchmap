@@ -1,0 +1,76 @@
+# ---- SECRETS & CREDENTIALS (NEVER COMMIT) ----
+.env
+.env.local
+dart_defines.txt
+*.jks
+*.keystore
+key.properties
+android/key.properties
+android/local.properties
+**/google-services.json
+ios/Runner/GoogleService-Info.plist
+lib/firebase_options.dart
+tools/service-account.json
+
+# ---- LARGE DATASETS & HEAVY ASSETS (TOO BIG FOR REPO) ----
+tools/swachh_bharat_data_full.json
+tools/loomap_extended_data.json
+loomap_extended_data.json
+swachh_bharat_data_full.json
+assets/audio/*.mp3
+
+# ---- LOCAL DEV ECOSYSTEM & WORKSPACE ----
+.puro/
+scratch/
+migrate_working_dir/
+*.log
+flutter_*.log
+
+# ---- FLUTTER / DART INTERNAL BUILD ARCHITECTURE ----
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+android/build/
+.flutter-plugins
+.flutter-plugins-dependencies
+/coverage/
+**/doc/api/
+**/ios/Flutter/.last_build_id
+
+# ---- IDE CONFIGURATIONS ----
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.metadata
+
+# ---- ANDROID COMPILATION ARTIFACTS ----
+android/.gradle/
+/android/app/debug/
+/android/app/profile/
+/android/app/release/
+*.apk
+*.aab
+
+# ---- IOS COMPILATION ARTIFACTS ----
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+**/Flutter/ephemeral/
+
+# ---- SYSTEM METADATA JUNK ----
+.DS_Store
+Thumbs.db
+app.*.symbols
+app.*.map.json
+._*
+.Spotlight-V100
+.Trashes
+
+# ---- Internal Dev Guides ----
+LAUNCH_CHECKLIST.md
+README_ASSETS.md

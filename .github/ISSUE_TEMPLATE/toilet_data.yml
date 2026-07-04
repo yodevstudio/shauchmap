@@ -1,0 +1,38 @@
+name: "🚻 Toilet data report"
+description: A toilet on the map is wrong, missing, closed, or misrepresented.
+title: "[Data]: "
+labels: ["data"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The best way to fix data is **inside the app** (add/verify it directly).
+        Use this form for anything you can't fix in-app, or to flag bad entries.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What's the issue?
+      options:
+        - Toilet is missing (should be added)
+        - Toilet is permanently closed / gone
+        - Wrong details (hours, water, cost, etc.)
+        - Not safe / should be flagged
+        - Duplicate entry
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: location
+    attributes:
+      label: Location
+      description: Area, landmark, or coordinates.
+      placeholder: "e.g. Behind Nehru Park, Jodhpur — or 26.29, 73.02"
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      placeholder: What's wrong, and what should it say instead?
+    validations:
+      required: true

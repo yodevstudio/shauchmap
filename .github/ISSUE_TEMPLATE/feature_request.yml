@@ -1,0 +1,35 @@
+name: "💡 Feature request"
+description: Suggest an idea or improvement for ShauchMap.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the user need behind the idea.
+      placeholder: "As a user, I want … so that …"
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: How might it work? Sketches or mockups welcome.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of the app?
+      options:
+        - Map / GO
+        - Browse / Search
+        - Add a toilet
+        - Scout system / Profile
+        - Data quality
+        - Other
