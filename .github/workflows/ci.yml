@@ -23,21 +23,26 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      # Ironclad file injection using EOF to prevent JSON/Bash string corruption
+      - name: Inject Secure Environment Files
+        run: |
+          mkdir -p android/app
+          mkdir -p lib
+          cat << 'EOF' > android/app/google-services.json
+          ${{ secrets.GOOGLE_SERVICES_JSON }}
+          EOF
+          cat << 'EOF' > lib/firebase_options.dart
+          ${{ secrets.FIREBASE_OPTIONS_DART }}
+          EOF
+          cat << 'EOF' > .env
+          ${{ secrets.ENV_FILE }}
+          EOF
+
       - name: Verify formatting
         run: dart format --output=none --set-exit-if-changed .
-
-      # Injects a sterile mockup architecture on the fly so the build runner passes the hidden file check
-      - name: Create dummy configuration placeholders
-        run: |
-          mkdir -p lib
-          echo "import 'package:firebase_core/firebase_core.dart';" > lib/firebase_options.dart
-          echo "class DefaultFirebaseOptions { static FirebaseOptions get currentPlatform => const FirebaseOptions(apiKey: 'mock', appId: 'mock', messagingSenderId: 'mock', projectId: 'mock'); }" >> lib/firebase_options.dart
-          touch .env
 
       - name: Analyze
         run: flutter analyze
 
-      # Build a debug APK to prove the app compiles.
-      # A dummy Places key is fine for a compile check — no real key is needed in CI.
       - name: Build debug APK
-        run: flutter build apk --debug --dart-define=PLACES_API_KEY=ci_dummy_key
+        run: flutter build apk --debug
