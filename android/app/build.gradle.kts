@@ -7,6 +7,13 @@ if (keystorePropertiesFile.exists()) {
     keystorePropertiesFile.inputStream().use { keystoreProperties.load(it) }
 }
 
+// Resolve a signing value: key.properties first, then CI env vars, then null.
+fun signingVal(propKey: String, envKey: String): String? =
+    keystoreProperties.getProperty(propKey) ?: System.getenv(envKey)
+
+val hasKeystore = signingVal("storeFile", "STORE_FILE") != null &&
+    signingVal("keyAlias", "KEY_ALIAS") != null
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
@@ -27,11 +34,13 @@ android {
     }
 
     signingConfigs {
-        create("release") {
-            keyAlias = keystoreProperties["keyAlias"] as String
-            keyPassword = keystoreProperties["keyPassword"] as String
-            storeFile = file(keystoreProperties["storeFile"] as String)
-            storePassword = keystoreProperties["storePassword"] as String
+        if (hasKeystore) {
+            create("release") {
+                keyAlias = signingVal("keyAlias", "KEY_ALIAS")!!
+                keyPassword = signingVal("keyPassword", "KEY_PASSWORD") ?: ""
+                storeFile = file(signingVal("storeFile", "STORE_FILE")!!)
+                storePassword = signingVal("storePassword", "STORE_PASSWORD") ?: ""
+            }
         }
     }
 
@@ -46,7 +55,8 @@ android {
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = if (hasKeystore) signingConfigs.getByName("release")
+                            else signingConfigs.getByName("debug")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
