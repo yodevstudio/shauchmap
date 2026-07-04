@@ -26,6 +26,14 @@ jobs:
       - name: Verify formatting
         run: dart format --output=none --set-exit-if-changed .
 
+      # Injects a sterile mockup architecture on the fly so the build runner passes the hidden file check
+      - name: Create dummy configuration placeholders
+        run: |
+          mkdir -p lib
+          echo "import 'package:firebase_core/firebase_core.dart';" > lib/firebase_options.dart
+          echo "class DefaultFirebaseOptions { static FirebaseOptions get currentPlatform => const FirebaseOptions(apiKey: 'mock', appId: 'mock', messagingSenderId: 'mock', projectId: 'mock'); }" >> lib/firebase_options.dart
+          touch .env
+
       - name: Analyze
         run: flutter analyze
 
