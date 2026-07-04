@@ -28,8 +28,7 @@ class SmStateView extends StatelessWidget {
   });
 
   /// Shimmer skeleton — use while toilets list is empty and loading.
-  factory SmStateView.loading() =>
-      const SmStateView._(_StateKind.loading);
+  factory SmStateView.loading() => const SmStateView._(_StateKind.loading);
 
   /// Zero results — rural area or filtered-out everything.
   factory SmStateView.empty({VoidCallback? onAdd}) => SmStateView._(
@@ -99,7 +98,8 @@ class SmStateView extends StatelessWidget {
       child: ListView.separated(
         padding: const EdgeInsets.all(SmTokens.s16),
         itemCount: 5,
-        separatorBuilder: (context, index) => const SizedBox(height: SmTokens.s12),
+        separatorBuilder: (context, index) =>
+            const SizedBox(height: SmTokens.s12),
         itemBuilder: (context, index) => Container(
           height: 88,
           decoration: BoxDecoration(

@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 
@@ -18,20 +18,24 @@ import '../theme/sm_theme.dart';
 import '../theme/sm_widgets.dart';
 import '../widgets/sm_states.dart';
 
-
 import 'package:collection/collection.dart';
 
 enum CameraTrackMode { gps, toilet, free }
 
-double bayesianRating(double rawAvg, int count, {double m = 5, double globalMean = 3.5}) => 
-    (count / (count + m)) * rawAvg + (m / (count + m)) * globalMean;
+double bayesianRating(
+  double rawAvg,
+  int count, {
+  double m = 5,
+  double globalMean = 3.5,
+}) => (count / (count + m)) * rawAvg + (m / (count + m)) * globalMean;
 
 double wilsonScore(int up, int down) {
   final int n = up + down;
   if (n == 0) return 0.0;
   final double z = 1.96;
   final double p = up / n;
-  return (p + z * z / (2 * n) - z * sqrt((p * (1 - p) + z * z / (4 * n)) / n)) / (1 + z * z / n);
+  return (p + z * z / (2 * n) - z * sqrt((p * (1 - p) + z * z / (4 * n)) / n)) /
+      (1 + z * z / n);
 }
 
 class MapScreen extends StatefulWidget {
@@ -54,11 +58,24 @@ class MapScreen extends StatefulWidget {
   final int streakCount;
 
   const MapScreen({
-    super.key, required this.toilets, required this.firestoreService, required this.isSignedIn,
-    required this.userId, required this.userName, required this.isOnline, required this.onSignInRequest,
-    required this.onRefreshToilets, this.onSearchPressed, this.onAccountPressed, this.onSearchLocationUpdate,
-    this.viewingPlaceName, this.onClearSearch,
-    this.userPosition, this.searchLat, this.searchLng, this.streakCount = 0,
+    super.key,
+    required this.toilets,
+    required this.firestoreService,
+    required this.isSignedIn,
+    required this.userId,
+    required this.userName,
+    required this.isOnline,
+    required this.onSignInRequest,
+    required this.onRefreshToilets,
+    this.onSearchPressed,
+    this.onAccountPressed,
+    this.onSearchLocationUpdate,
+    this.viewingPlaceName,
+    this.onClearSearch,
+    this.userPosition,
+    this.searchLat,
+    this.searchLng,
+    this.streakCount = 0,
   });
 
   @override
@@ -80,7 +97,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
   // ignore: unused_field
   bool _isProgrammaticPageScroll = false;
-  
+
   List<Toilet> _cachedSortedToilets = [];
   // ignore: unused_field
   Map<String, double> _scoreCache = {};
@@ -91,7 +108,10 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     _pageController = PageController(viewportFraction: 0.85);
     _updateSortedToilets();
     if (widget.userPosition != null) {
-      _updateCityName(widget.userPosition!.latitude, widget.userPosition!.longitude);
+      _updateCityName(
+        widget.userPosition!.latitude,
+        widget.userPosition!.longitude,
+      );
     }
   }
 
@@ -101,23 +121,32 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     if (widget.toilets != oldWidget.toilets) {
       _updateSortedToilets();
       if (_selectedToilet != null) {
-        _selectedToilet = widget.toilets.firstWhereOrNull((t) => t.id == _selectedToilet!.id);
+        _selectedToilet = widget.toilets.firstWhereOrNull(
+          (t) => t.id == _selectedToilet!.id,
+        );
       }
     }
-    
-    if (widget.userPosition != oldWidget.userPosition && widget.userPosition != null) {
+
+    if (widget.userPosition != oldWidget.userPosition &&
+        widget.userPosition != null) {
       // First position fix - centre the map once
       if (oldWidget.userPosition == null && widget.searchLat == null) {
         _mapController?.animateCamera(
           CameraUpdate.newCameraPosition(
             CameraPosition(
-              target: LatLng(widget.userPosition!.latitude, widget.userPosition!.longitude),
+              target: LatLng(
+                widget.userPosition!.latitude,
+                widget.userPosition!.longitude,
+              ),
               zoom: 15.0,
             ),
           ),
         );
       }
-      _updateCityName(widget.userPosition!.latitude, widget.userPosition!.longitude);
+      _updateCityName(
+        widget.userPosition!.latitude,
+        widget.userPosition!.longitude,
+      );
       _updateSortedToilets();
     }
   }
@@ -132,15 +161,28 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
   void _setSelectedToilet(Toilet toilet) {
     if (_selectedToilet?.id == toilet.id) return;
-    setState(() { _selectedToilet = toilet; });
+    setState(() {
+      _selectedToilet = toilet;
+    });
   }
 
   void _updateSortedToilets() {
     List<Toilet> list = List.from(widget.toilets);
     // M6: hide likely-spam entries with overwhelming downvotes
-    list = list.where((t) => !(wilsonScore(t.upvoteCount, t.downvoteCount) < 0.15 && (t.upvoteCount + t.downvoteCount) > 8)).toList();
+    list = list
+        .where(
+          (t) =>
+              !(wilsonScore(t.upvoteCount, t.downvoteCount) < 0.15 &&
+                  (t.upvoteCount + t.downvoteCount) > 8),
+        )
+        .toList();
     if (_filterOnlyFree) list = list.where((t) => t.isFree).toList();
-    if (_filterOnlyOpen) list = list.where((t) => t.isOpen || t.addedBy == 'osm_import' || t.addedBy.isEmpty).toList();
+    if (_filterOnlyOpen)
+      list = list
+          .where(
+            (t) => t.isOpen || t.addedBy == 'osm_import' || t.addedBy.isEmpty,
+          )
+          .toList();
     if (_filterOnlyWestern) list = list.where((t) => t.isWestern).toList();
     if (_filterOnlyWater) list = list.where((t) => t.hasWater).toList();
     if (_filterOnlyWomenSafe) list = list.where((t) => t.isWomenSafe).toList();
@@ -156,21 +198,24 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       return sb.compareTo(sa);
     });
 
-    setState(() { 
-      _scoreCache = localCache; 
-      _cachedSortedToilets = list; 
+    setState(() {
+      _scoreCache = localCache;
+      _cachedSortedToilets = list;
     });
   }
 
   Future<void> _updateCityName(double lat, double lng) async {
     try {
-      final placemarks = await placemarkFromCoordinates(lat, lng)
-          .timeout(const Duration(seconds: 5));
+      final placemarks = await placemarkFromCoordinates(
+        lat,
+        lng,
+      ).timeout(const Duration(seconds: 5));
       if (placemarks.isNotEmpty && mounted) {
         final p = placemarks.first;
         final parts = <String>[
           if (p.locality != null && p.locality!.isNotEmpty) p.locality!,
-          if (p.administrativeArea != null && p.administrativeArea!.isNotEmpty) p.administrativeArea!,
+          if (p.administrativeArea != null && p.administrativeArea!.isNotEmpty)
+            p.administrativeArea!,
         ];
         setState(() {
           _cityName = parts.isNotEmpty ? parts.join(', ') : 'Near You';
@@ -181,33 +226,39 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     }
   }
 
-
-
   double _calculateMatchScore(Toilet toilet) {
     double dScore = 0.4;
     if (widget.userPosition != null) {
       final double distMeters = Geolocator.distanceBetween(
-        widget.userPosition!.latitude, 
-        widget.userPosition!.longitude, 
-        toilet.latitude, 
-        toilet.longitude
+        widget.userPosition!.latitude,
+        widget.userPosition!.longitude,
+        toilet.latitude,
+        toilet.longitude,
       );
       dScore = exp(-distMeters / 400.0);
     }
 
     final double openScore = toilet.isOpen ? 1.0 : 0.0;
-    final double bScore = bayesianRating(toilet.starRating, toilet.totalRatings) / 5.0;
+    final double bScore =
+        bayesianRating(toilet.starRating, toilet.totalRatings) / 5.0;
     final double wScore = wilsonScore(toilet.upvoteCount, toilet.downvoteCount);
-    final double tScore = trustScore(bScore * 5.0, freshnessConfidence(toilet.lastVerified));
+    final double tScore = trustScore(
+      bScore * 5.0,
+      freshnessConfidence(toilet.lastVerified),
+    );
 
-    return (0.40 * dScore) +      // 40% distance proximity
-           (0.25 * tScore) +      // 25% freshness & bayesian trust
-           (0.15 * openScore) +   // 15% open status bonus
-           (0.15 * bScore) +      // 15% bayesian rating
-           (0.05 * wScore);       // 5% community upvote confidence
+    return (0.40 * dScore) + // 40% distance proximity
+        (0.25 * tScore) + // 25% freshness & bayesian trust
+        (0.15 * openScore) + // 15% open status bonus
+        (0.15 * bScore) + // 15% bayesian rating
+        (0.05 * wScore); // 5% community upvote confidence
   }
 
-  Widget _buildFilterChip(String label, bool isSelected, ValueChanged<bool> onChanged) {
+  Widget _buildFilterChip(
+    String label,
+    bool isSelected,
+    ValueChanged<bool> onChanged,
+  ) {
     return SmFilterChip(
       label: label,
       selected: isSelected,
@@ -217,13 +268,19 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
   void _openDetailSheet(Toilet toilet) {
     showModalBottomSheet(
-      context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) {
         return FractionallySizedBox(
           heightFactor: 0.9,
           child: DetailSheet(
-            toilet: toilet, userPosition: widget.userPosition, isSignedIn: widget.isSignedIn,
-            userId: widget.userId, userName: widget.userName, onSignInRequest: widget.onSignInRequest,
+            toilet: toilet,
+            userPosition: widget.userPosition,
+            isSignedIn: widget.isSignedIn,
+            userId: widget.userId,
+            userName: widget.userName,
+            onSignInRequest: widget.onSignInRequest,
             onRefreshToilets: widget.onRefreshToilets,
           ),
         );
@@ -231,14 +288,16 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     );
   }
 
-
-
   String? _calculateDistanceText(Toilet toilet) {
     if (widget.userPosition == null) return null;
-    final double distance = Geolocator.distanceBetween(widget.userPosition!.latitude, widget.userPosition!.longitude, toilet.latitude, toilet.longitude);
+    final double distance = Geolocator.distanceBetween(
+      widget.userPosition!.latitude,
+      widget.userPosition!.longitude,
+      toilet.latitude,
+      toilet.longitude,
+    );
     return "${distance.toInt()}m";
   }
-
 
   // ---- Peek-sheet + browse helpers (mockup rebuild) ----
   String? _recencyText(Toilet t) {
@@ -269,7 +328,9 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       builder: (_) => FractionallySizedBox(
         heightFactor: 0.92,
         child: ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(SmTokens.rSheet)),
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(SmTokens.rSheet),
+          ),
           child: Container(
             decoration: BoxDecoration(
               color: context.sm.surface,
@@ -311,7 +372,9 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       builder: (_) => FractionallySizedBox(
         heightFactor: 0.92,
         child: ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(SmTokens.rSheet)),
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(SmTokens.rSheet),
+          ),
           child: Container(
             decoration: BoxDecoration(
               color: context.sm.surface,
@@ -343,7 +406,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     );
   }
 
-
   Widget _buildPeekSheet(BuildContext context, Toilet t, int totalNearby) {
     final c = context.sm;
     final dist = _calculateDistanceText(t);
@@ -351,18 +413,27 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     return Container(
       decoration: BoxDecoration(
         color: c.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(SmTokens.rSheet)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(SmTokens.rSheet),
+        ),
         border: Border.all(color: c.line, width: 1),
         boxShadow: context.smHeavy,
       ),
       padding: const EdgeInsets.fromLTRB(
-          SmTokens.s20, SmTokens.s8, SmTokens.s20, SmTokens.s16),
+        SmTokens.s20,
+        SmTokens.s8,
+        SmTokens.s20,
+        SmTokens.s16,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Center(
-            child: GestureDetector(onTap: _openBrowseSheet, child: const SmGrabHandle()),
+            child: GestureDetector(
+              onTap: _openBrowseSheet,
+              child: const SmGrabHandle(),
+            ),
           ),
           const SizedBox(height: SmTokens.s12),
           const SmEyebrow('Nearest open toilet'),
@@ -375,12 +446,17 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                 textBaseline: TextBaseline.alphabetic,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(dist?.replaceAll('m', '') ?? '—',
-                      style: SmText.hero.copyWith(color: c.ink, height: 1.0)),
+                  Text(
+                    dist?.replaceAll('m', '') ?? '—',
+                    style: SmText.hero.copyWith(color: c.ink, height: 1.0),
+                  ),
                   const SizedBox(width: 2),
                   Padding(
                     padding: const EdgeInsets.only(bottom: 6),
-                    child: Text('m', style: SmText.subhead.copyWith(color: c.ink2)),
+                    child: Text(
+                      'm',
+                      style: SmText.subhead.copyWith(color: c.ink2),
+                    ),
                   ),
                 ],
               ),
@@ -390,11 +466,15 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(t.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: SmText.subhead
-                            .copyWith(color: c.ink, fontWeight: FontWeight.w800)),
+                    Text(
+                      t.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: SmText.subhead.copyWith(
+                        color: c.ink,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                     const SizedBox(height: SmTokens.s4),
                     SmStatusLabel(t.isOpen ? SmStatus.open : SmStatus.closed),
                     if (meta.isNotEmpty) ...[
@@ -416,9 +496,13 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
           Center(
             child: GestureDetector(
               onTap: _openBrowseSheet,
-              child: Text('See all $totalNearby nearby   ↑',
-                  style: SmText.caption
-                      .copyWith(color: c.ink2, fontWeight: FontWeight.w800)),
+              child: Text(
+                'See all $totalNearby nearby   ↑',
+                style: SmText.caption.copyWith(
+                  color: c.ink2,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
             ),
           ),
         ],
@@ -431,8 +515,10 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     final toilets = _cachedSortedToilets;
     if (toilets.isNotEmpty) {
       _selectedToilet = _selectedToilet != null
-          ? toilets.firstWhere((t) => t.id == _selectedToilet!.id,
-              orElse: () => toilets[0])
+          ? toilets.firstWhere(
+              (t) => t.id == _selectedToilet!.id,
+              orElse: () => toilets[0],
+            )
           : toilets[0];
     } else {
       _selectedToilet = null;
@@ -449,8 +535,10 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             selectedToilet: _selectedToilet,
             orientationEngine: _orientationEngine,
             currentUserLatLng: widget.userPosition != null
-                ? LatLng(widget.userPosition!.latitude,
-                    widget.userPosition!.longitude)
+                ? LatLng(
+                    widget.userPosition!.latitude,
+                    widget.userPosition!.longitude,
+                  )
                 : const LatLng(26.2940, 73.0185),
             onToiletSelected: (toilet) {
               _setSelectedToilet(toilet);
@@ -458,9 +546,11 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
               if (idx != -1 && _pageController != null) {
                 _isProgrammaticPageScroll = true;
                 _pageController!
-                    .animateToPage(idx,
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOut)
+                    .animateToPage(
+                      idx,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    )
                     .then((_) => _isProgrammaticPageScroll = false);
               }
             },
@@ -489,19 +579,26 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                         child: Container(
                           height: 48,
                           padding: const EdgeInsets.symmetric(
-                              horizontal: SmTokens.s12),
+                            horizontal: SmTokens.s12,
+                          ),
                           decoration: BoxDecoration(
                             color: context.sm.surface,
-                            borderRadius:
-                                BorderRadius.circular(SmTokens.rSmall),
-                            border:
-                                Border.all(color: context.sm.line, width: 1),
+                            borderRadius: BorderRadius.circular(
+                              SmTokens.rSmall,
+                            ),
+                            border: Border.all(
+                              color: context.sm.line,
+                              width: 1,
+                            ),
                             boxShadow: context.smSoft,
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.search,
-                                  size: 20, color: context.sm.ink3),
+                              Icon(
+                                Icons.search,
+                                size: 20,
+                                color: context.sm.ink3,
+                              ),
                               const SizedBox(width: SmTokens.s8),
                               Expanded(
                                 child: Text(
@@ -512,8 +609,9 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                           : '$_cityName · search area'),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: SmText.body
-                                      .copyWith(color: context.sm.ink3),
+                                  style: SmText.body.copyWith(
+                                    color: context.sm.ink3,
+                                  ),
                                 ),
                               ),
                               if (widget.viewingPlaceName != null)
@@ -522,8 +620,11 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                                     CustomHapticsService.playToggleSnap();
                                     widget.onClearSearch?.call();
                                   },
-                                  child: Icon(Icons.close,
-                                      size: 18, color: context.sm.ink3),
+                                  child: Icon(
+                                    Icons.close,
+                                    size: 18,
+                                    color: context.sm.ink3,
+                                  ),
                                 ),
                             ],
                           ),
@@ -538,8 +639,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                 height: 36,
                 child: ListView(
                   scrollDirection: Axis.horizontal,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: SmTokens.s16),
+                  padding: const EdgeInsets.symmetric(horizontal: SmTokens.s16),
                   children: [
                     _buildFilterChip('Open Now', _filterOnlyOpen, (v) {
                       setState(() {
@@ -598,7 +698,10 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             right: 0,
             bottom: 0,
             child: _buildPeekSheet(
-                context, _selectedToilet!, widget.toilets.length),
+              context,
+              _selectedToilet!,
+              widget.toilets.length,
+            ),
           ),
       ],
     );
@@ -617,9 +720,16 @@ class LooMapCanvas extends StatefulWidget {
   final void Function(String, double, double)? onSearchLocationUpdate;
 
   const LooMapCanvas({
-    super.key, required this.toilets, required this.selectedToilet, required this.onToiletSelected,
-    required this.onMapCreated, this.currentUserLatLng, required this.orientationEngine,
-    this.searchLat, this.searchLng, this.onSearchLocationUpdate,
+    super.key,
+    required this.toilets,
+    required this.selectedToilet,
+    required this.onToiletSelected,
+    required this.onMapCreated,
+    this.currentUserLatLng,
+    required this.orientationEngine,
+    this.searchLat,
+    this.searchLng,
+    this.onSearchLocationUpdate,
   });
 
   @override
@@ -632,14 +742,14 @@ class _LooMapCanvasState extends State<LooMapCanvas> {
 
   final bool _is3DMode = false;
   double _smoothedHeading = 0.0;
-  
+
   CameraTrackMode _cameraTrackMode = CameraTrackMode.gps;
-  
-  bool _isUserDraggingMap = false; 
+
+  bool _isUserDraggingMap = false;
   bool _isAnimatingProgrammatically = false;
-  
+
   bool _isUserInteracting = false;
-  
+
   StreamSubscription<CompassEvent>? _compassSubscription;
   double? _latestCompass;
 
@@ -657,9 +767,15 @@ class _LooMapCanvasState extends State<LooMapCanvas> {
   void didUpdateWidget(covariant LooMapCanvas oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.toilets != oldWidget.toilets) {
-      _toiletsStateKey = widget.toilets.map((t) => '${t.id}${t.isOpen}${t.starRating}${t.isFlagged}${t.isWomenSafe}${t.upvoteCount}${t.downvoteCount}').join(',');
+      _toiletsStateKey = widget.toilets
+          .map(
+            (t) =>
+                '${t.id}${t.isOpen}${t.starRating}${t.isFlagged}${t.isWomenSafe}${t.upvoteCount}${t.downvoteCount}',
+          )
+          .join(',');
     }
-    if (widget.searchLat != oldWidget.searchLat || widget.searchLng != oldWidget.searchLng) {
+    if (widget.searchLat != oldWidget.searchLat ||
+        widget.searchLng != oldWidget.searchLng) {
       if (widget.searchLat != null && widget.searchLng != null) {
         setState(() {
           _showSearchThisArea = false;
@@ -676,29 +792,36 @@ class _LooMapCanvasState extends State<LooMapCanvas> {
         );
       }
     }
-    
-    if (widget.currentUserLatLng != oldWidget.currentUserLatLng && widget.currentUserLatLng != null) {
+
+    if (widget.currentUserLatLng != oldWidget.currentUserLatLng &&
+        widget.currentUserLatLng != null) {
       _onSensorUpdate(widget.currentUserLatLng, _latestCompass);
     }
-    
+
     if (widget.selectedToilet?.id != oldWidget.selectedToilet?.id) {
-      setState(() { 
-        _visualSelectedToilet = widget.selectedToilet; 
+      setState(() {
+        _visualSelectedToilet = widget.selectedToilet;
         _isUserInteracting = false; // Unpause so carousel can jump to toilet
       });
       if (!_isUserDraggingMap) {
-        _cameraTrackMode = CameraTrackMode.toilet; 
-        _isAnimatingProgrammatically = true; // Lock sensors until native glide finishes
-        
+        _cameraTrackMode = CameraTrackMode.toilet;
+        _isAnimatingProgrammatically =
+            true; // Lock sensors until native glide finishes
+
         if (widget.selectedToilet != null) {
-          _mapController?.animateCamera(CameraUpdate.newCameraPosition(
-            CameraPosition(
-              target: LatLng(widget.selectedToilet!.latitude, widget.selectedToilet!.longitude),
-              zoom: 16.0,
-              tilt: _is3DMode ? 45.0 : 0.0,
-              bearing: _is3DMode ? _smoothedHeading : 0.0,
-            )
-          ));
+          _mapController?.animateCamera(
+            CameraUpdate.newCameraPosition(
+              CameraPosition(
+                target: LatLng(
+                  widget.selectedToilet!.latitude,
+                  widget.selectedToilet!.longitude,
+                ),
+                zoom: 16.0,
+                tilt: _is3DMode ? 45.0 : 0.0,
+                bearing: _is3DMode ? _smoothedHeading : 0.0,
+              ),
+            ),
+          );
         }
       }
     }
@@ -708,7 +831,12 @@ class _LooMapCanvasState extends State<LooMapCanvas> {
   void initState() {
     super.initState();
     _visualSelectedToilet = widget.selectedToilet;
-    _toiletsStateKey = widget.toilets.map((t) => '${t.id}${t.isOpen}${t.starRating}${t.isFlagged}${t.isWomenSafe}${t.upvoteCount}${t.downvoteCount}').join(',');
+    _toiletsStateKey = widget.toilets
+        .map(
+          (t) =>
+              '${t.id}${t.isOpen}${t.starRating}${t.isFlagged}${t.isWomenSafe}${t.upvoteCount}${t.downvoteCount}',
+        )
+        .join(',');
   }
 
   @override
@@ -721,9 +849,9 @@ class _LooMapCanvasState extends State<LooMapCanvas> {
     if (_compassSubscription != null) return;
 
     _compassSubscription = FlutterCompass.events?.listen((CompassEvent event) {
-      if (mounted) { 
-        _latestCompass = event.heading; 
-        _onSensorUpdate(widget.currentUserLatLng, _latestCompass); 
+      if (mounted) {
+        _latestCompass = event.heading;
+        _onSensorUpdate(widget.currentUserLatLng, _latestCompass);
       }
     });
 
@@ -735,12 +863,12 @@ class _LooMapCanvasState extends State<LooMapCanvas> {
   void _onSensorUpdate(LatLng? gps, double? compass) {
     if (_isUserInteracting) return;
     if (_mapController == null || gps == null) return;
-    
+
     // COMPASS ONLY UPDATES IF WE ARE NOT GLIDING OR DRAGGING
-    if (_isUserDraggingMap || _isAnimatingProgrammatically) return; 
+    if (_isUserDraggingMap || _isAnimatingProgrammatically) return;
 
     // Stop continuous sensor updates when the map is in free-look mode
-    if (_cameraTrackMode == CameraTrackMode.free) return; 
+    if (_cameraTrackMode == CameraTrackMode.free) return;
     if (!_is3DMode) return;
 
     LatLng target;
@@ -750,7 +878,10 @@ class _LooMapCanvasState extends State<LooMapCanvas> {
         break;
       case CameraTrackMode.toilet:
         if (_visualSelectedToilet != null) {
-          target = LatLng(_visualSelectedToilet!.latitude, _visualSelectedToilet!.longitude);
+          target = LatLng(
+            _visualSelectedToilet!.latitude,
+            _visualSelectedToilet!.longitude,
+          );
         } else {
           target = gps;
         }
@@ -770,15 +901,25 @@ class _LooMapCanvasState extends State<LooMapCanvas> {
     final double zoom = _currentCameraPosition?.zoom ?? 15.5;
 
     try {
-      _mapController!.moveCamera(CameraUpdate.newCameraPosition(CameraPosition(target: target, zoom: zoom, tilt: tilt, bearing: bearing)));
+      _mapController!.moveCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: target,
+            zoom: zoom,
+            tilt: tilt,
+            bearing: bearing,
+          ),
+        ),
+      );
     } catch (_) {}
   }
 
   Set<Marker> _getMarkers() {
     String currentKey = _toiletsStateKey + (_visualSelectedToilet?.id ?? '');
-    
+
     if (_visibleBounds != null) {
-      currentKey += ',b:${_visibleBounds!.southwest.latitude.toStringAsFixed(3)},${_visibleBounds!.southwest.longitude.toStringAsFixed(3)},${_visibleBounds!.northeast.latitude.toStringAsFixed(3)},${_visibleBounds!.northeast.longitude.toStringAsFixed(3)}';
+      currentKey +=
+          ',b:${_visibleBounds!.southwest.latitude.toStringAsFixed(3)},${_visibleBounds!.southwest.longitude.toStringAsFixed(3)},${_visibleBounds!.northeast.latitude.toStringAsFixed(3)},${_visibleBounds!.northeast.longitude.toStringAsFixed(3)}';
     }
     currentKey += ',z:${_zoom.toStringAsFixed(1)}';
 
@@ -795,20 +936,33 @@ class _LooMapCanvasState extends State<LooMapCanvas> {
 
       for (final toilet in widget.toilets) {
         if (_visibleBounds != null) {
-          final double latSpan = (_visibleBounds!.northeast.latitude - _visibleBounds!.southwest.latitude).abs();
-          final double lngSpan = (_visibleBounds!.northeast.longitude - _visibleBounds!.southwest.longitude).abs();
-          final double expandedSouth = _visibleBounds!.southwest.latitude - (latSpan * 0.2);
-          final double expandedNorth = _visibleBounds!.northeast.latitude + (latSpan * 0.2);
-          final double expandedWest = _visibleBounds!.southwest.longitude - (lngSpan * 0.2);
-          final double expandedEast = _visibleBounds!.northeast.longitude + (lngSpan * 0.2);
-          
-          if (toilet.latitude < expandedSouth || toilet.latitude > expandedNorth ||
-              toilet.longitude < expandedWest || toilet.longitude > expandedEast) {
+          final double latSpan =
+              (_visibleBounds!.northeast.latitude -
+                      _visibleBounds!.southwest.latitude)
+                  .abs();
+          final double lngSpan =
+              (_visibleBounds!.northeast.longitude -
+                      _visibleBounds!.southwest.longitude)
+                  .abs();
+          final double expandedSouth =
+              _visibleBounds!.southwest.latitude - (latSpan * 0.2);
+          final double expandedNorth =
+              _visibleBounds!.northeast.latitude + (latSpan * 0.2);
+          final double expandedWest =
+              _visibleBounds!.southwest.longitude - (lngSpan * 0.2);
+          final double expandedEast =
+              _visibleBounds!.northeast.longitude + (lngSpan * 0.2);
+
+          if (toilet.latitude < expandedSouth ||
+              toilet.latitude > expandedNorth ||
+              toilet.longitude < expandedWest ||
+              toilet.longitude > expandedEast) {
             continue;
           }
         }
 
-        final String bucketKey = '${(toilet.latitude / cell).floor()}_${(toilet.longitude / cell).floor()}';
+        final String bucketKey =
+            '${(toilet.latitude / cell).floor()}_${(toilet.longitude / cell).floor()}';
         buckets.putIfAbsent(bucketKey, () => []).add(toilet);
       }
 
@@ -819,18 +973,27 @@ class _LooMapCanvasState extends State<LooMapCanvas> {
             sumLat += t.latitude;
             sumLng += t.longitude;
           }
-          final centroid = LatLng(sumLat / bucket.length, sumLng / bucket.length);
+          final centroid = LatLng(
+            sumLat / bucket.length,
+            sumLng / bucket.length,
+          );
           markers.add(
             Marker(
-              markerId: MarkerId('cluster_${centroid.latitude}_${centroid.longitude}'),
+              markerId: MarkerId(
+                'cluster_${centroid.latitude}_${centroid.longitude}',
+              ),
               position: centroid,
-              icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueCyan),
+              icon: BitmapDescriptor.defaultMarkerWithHue(
+                BitmapDescriptor.hueCyan,
+              ),
               infoWindow: InfoWindow(title: '${bucket.length} toilets'),
               zIndexInt: 3,
               consumeTapEvents: true,
               onTap: () {
                 CustomHapticsService.playSpringBounce();
-                _mapController?.animateCamera(CameraUpdate.newLatLngZoom(centroid, _zoom + 2));
+                _mapController?.animateCamera(
+                  CameraUpdate.newLatLngZoom(centroid, _zoom + 2),
+                );
               },
             ),
           );
@@ -856,15 +1019,27 @@ class _LooMapCanvasState extends State<LooMapCanvas> {
       List<Toilet> visibleToilets = [];
       for (final toilet in widget.toilets) {
         if (_visibleBounds != null) {
-          final double latSpan = (_visibleBounds!.northeast.latitude - _visibleBounds!.southwest.latitude).abs();
-          final double lngSpan = (_visibleBounds!.northeast.longitude - _visibleBounds!.southwest.longitude).abs();
-          final double expandedSouth = _visibleBounds!.southwest.latitude - (latSpan * 0.2);
-          final double expandedNorth = _visibleBounds!.northeast.latitude + (latSpan * 0.2);
-          final double expandedWest = _visibleBounds!.southwest.longitude - (lngSpan * 0.2);
-          final double expandedEast = _visibleBounds!.northeast.longitude + (lngSpan * 0.2);
-          
-          if (toilet.latitude < expandedSouth || toilet.latitude > expandedNorth ||
-              toilet.longitude < expandedWest || toilet.longitude > expandedEast) {
+          final double latSpan =
+              (_visibleBounds!.northeast.latitude -
+                      _visibleBounds!.southwest.latitude)
+                  .abs();
+          final double lngSpan =
+              (_visibleBounds!.northeast.longitude -
+                      _visibleBounds!.southwest.longitude)
+                  .abs();
+          final double expandedSouth =
+              _visibleBounds!.southwest.latitude - (latSpan * 0.2);
+          final double expandedNorth =
+              _visibleBounds!.northeast.latitude + (latSpan * 0.2);
+          final double expandedWest =
+              _visibleBounds!.southwest.longitude - (lngSpan * 0.2);
+          final double expandedEast =
+              _visibleBounds!.northeast.longitude + (lngSpan * 0.2);
+
+          if (toilet.latitude < expandedSouth ||
+              toilet.latitude > expandedNorth ||
+              toilet.longitude < expandedWest ||
+              toilet.longitude > expandedEast) {
             if (toilet.id != _visualSelectedToilet?.id) {
               continue;
             }
@@ -876,8 +1051,12 @@ class _LooMapCanvasState extends State<LooMapCanvas> {
       LatLng? centerRef = _currentCameraPosition?.target;
       if (centerRef == null && _visibleBounds != null) {
         centerRef = LatLng(
-          (_visibleBounds!.northeast.latitude + _visibleBounds!.southwest.latitude) / 2,
-          (_visibleBounds!.northeast.longitude + _visibleBounds!.southwest.longitude) / 2,
+          (_visibleBounds!.northeast.latitude +
+                  _visibleBounds!.southwest.latitude) /
+              2,
+          (_visibleBounds!.northeast.longitude +
+                  _visibleBounds!.southwest.longitude) /
+              2,
         );
       }
 
@@ -886,9 +1065,13 @@ class _LooMapCanvasState extends State<LooMapCanvas> {
         visibleToilets.sort((a, b) {
           if (a.id == _visualSelectedToilet?.id) return -1;
           if (b.id == _visualSelectedToilet?.id) return 1;
-          
-          final distA = pow(a.latitude - cr.latitude, 2) + pow(a.longitude - cr.longitude, 2);
-          final distB = pow(b.latitude - cr.latitude, 2) + pow(b.longitude - cr.longitude, 2);
+
+          final distA =
+              pow(a.latitude - cr.latitude, 2) +
+              pow(a.longitude - cr.longitude, 2);
+          final distB =
+              pow(b.latitude - cr.latitude, 2) +
+              pow(b.longitude - cr.longitude, 2);
           return distA.compareTo(distB);
         });
         visibleToilets = visibleToilets.take(60).toList();
@@ -923,26 +1106,39 @@ class _LooMapCanvasState extends State<LooMapCanvas> {
         Listener(
           onPointerDown: (_) {
             if (!_isUserInteracting) {
-              setState(() { 
-                _isUserInteracting = true; // Pauses background centering the moment the screen is touched
+              setState(() {
+                _isUserInteracting =
+                    true; // Pauses background centering the moment the screen is touched
               });
             }
           },
           child: GoogleMap(
-            padding: EdgeInsets.only(bottom: MediaQuery.of(context).size.height < 600 ? 150.0 : 180.0),
-            initialCameraPosition: const CameraPosition(target: LatLng(26.2940, 73.0185), zoom: 13.5),
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).size.height < 600 ? 150.0 : 180.0,
+            ),
+            initialCameraPosition: const CameraPosition(
+              target: LatLng(26.2940, 73.0185),
+              zoom: 13.5,
+            ),
             style: Theme.of(context).brightness == Brightness.light
                 ? lightMapStyle
-                : darkMapStyle, markers: _getMarkers(),
-            onMapCreated: (controller) { _mapController = controller; widget.onMapCreated(controller); _startSensorStreams(); },
+                : darkMapStyle,
+            markers: _getMarkers(),
+            onMapCreated: (controller) {
+              _mapController = controller;
+              widget.onMapCreated(controller);
+              _startSensorStreams();
+            },
             onCameraMoveStarted: () {
               if (!_isUserDraggingMap) {
-                setState(() { _isUserDraggingMap = true; });
+                setState(() {
+                  _isUserDraggingMap = true;
+                });
               }
             },
-            onCameraMove: (position) { 
-              _currentCameraPosition = position; 
-              _zoom = position.zoom; 
+            onCameraMove: (position) {
+              _currentCameraPosition = position;
+              _zoom = position.zoom;
             },
             onCameraIdle: () {
               if (mounted) {
@@ -953,22 +1149,39 @@ class _LooMapCanvasState extends State<LooMapCanvas> {
                   });
                 }
               }
-              if (mounted && _visualSelectedToilet != widget.selectedToilet) { setState(() { _visualSelectedToilet = widget.selectedToilet; }); }
+              if (mounted && _visualSelectedToilet != widget.selectedToilet) {
+                setState(() {
+                  _visualSelectedToilet = widget.selectedToilet;
+                });
+              }
               _mapController?.getVisibleRegion().then((b) {
                 if (!mounted) return;
-                final changed = _visibleBounds == null || 
-                                (b.southwest.latitude - _visibleBounds!.southwest.latitude).abs() > 0.0005 || 
-                                (b.northeast.longitude - _visibleBounds!.northeast.longitude).abs() > 0.0005;
+                final changed =
+                    _visibleBounds == null ||
+                    (b.southwest.latitude - _visibleBounds!.southwest.latitude)
+                            .abs() >
+                        0.0005 ||
+                    (b.northeast.longitude -
+                                _visibleBounds!.northeast.longitude)
+                            .abs() >
+                        0.0005;
                 if (changed) setState(() => _visibleBounds = b);
-                
+
                 // Distance check for "Search this area"
                 if (_currentCameraPosition != null) {
                   final target = _currentCameraPosition!.target;
-                  final refLat = widget.searchLat ?? widget.currentUserLatLng?.latitude;
-                  final refLng = widget.searchLng ?? widget.currentUserLatLng?.longitude;
-                  
+                  final refLat =
+                      widget.searchLat ?? widget.currentUserLatLng?.latitude;
+                  final refLng =
+                      widget.searchLng ?? widget.currentUserLatLng?.longitude;
+
                   if (refLat != null && refLng != null) {
-                    final dist = Geolocator.distanceBetween(refLat, refLng, target.latitude, target.longitude);
+                    final dist = Geolocator.distanceBetween(
+                      refLat,
+                      refLng,
+                      target.latitude,
+                      target.longitude,
+                    );
                     if (dist > 3000.0 && !_showSearchThisArea) {
                       setState(() => _showSearchThisArea = true);
                     } else if (dist <= 3000.0 && _showSearchThisArea) {
@@ -978,10 +1191,15 @@ class _LooMapCanvasState extends State<LooMapCanvas> {
                 }
               });
             },
-            myLocationEnabled: true, myLocationButtonEnabled: false, zoomControlsEnabled: false, compassEnabled: true, tiltGesturesEnabled: true, scrollGesturesEnabled: true, rotateGesturesEnabled: true,
+            myLocationEnabled: true,
+            myLocationButtonEnabled: false,
+            zoomControlsEnabled: false,
+            compassEnabled: true,
+            tiltGesturesEnabled: true,
+            scrollGesturesEnabled: true,
+            rotateGesturesEnabled: true,
           ),
         ),
-
 
         // SEARCH THIS AREA BUTTON
         if (_showSearchThisArea && widget.onSearchLocationUpdate != null)
@@ -1007,11 +1225,22 @@ class _LooMapCanvasState extends State<LooMapCanvas> {
                     backgroundColor: context.sm.brandSolid,
                     foregroundColor: context.sm.onBrand,
                     elevation: 4.0,
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.0)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20.0,
+                      vertical: 12.0,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24.0),
+                    ),
                   ),
                   icon: const Icon(Icons.search, size: 18.0),
-                  label: const Text("Search this area", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14.0)),
+                  label: const Text(
+                    "Search this area",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14.0,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -1021,10 +1250,11 @@ class _LooMapCanvasState extends State<LooMapCanvas> {
   }
 }
 
-
 BitmapDescriptor _getToiletMarkerIcon(Toilet toilet, bool isSelected) {
-  if (toilet.isFlagged) return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed);
-  if (toilet.downvoteCount > 5 && toilet.communityScore < 0.3) return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed);
+  if (toilet.isFlagged)
+    return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed);
+  if (toilet.downvoteCount > 5 && toilet.communityScore < 0.3)
+    return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed);
   double hue;
   if (!toilet.isOpen) {
     hue = BitmapDescriptor.hueRed; // Closed: red

@@ -40,10 +40,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: ctx.sm.surface,
-        title: Text(
-          'Delete Account?',
-          style: TextStyle(color: ctx.sm.ink),
-        ),
+        title: Text('Delete Account?', style: TextStyle(color: ctx.sm.ink)),
         content: Text(
           'This permanently deletes your account, scout points, badges, and profile. Your toilet additions and ratings remain to help the community.\n\nThis cannot be undone.',
           style: TextStyle(color: ctx.sm.ink2, height: 1.5),
@@ -51,17 +48,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(
-              'Cancel',
-              style: TextStyle(color: ctx.sm.ink2),
-            ),
+            child: Text('Cancel', style: TextStyle(color: ctx.sm.ink2)),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(
-              'Delete',
-              style: TextStyle(color: ctx.sm.statusClosed),
-            ),
+            child: Text('Delete', style: TextStyle(color: ctx.sm.statusClosed)),
           ),
         ],
       ),
@@ -128,7 +119,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (xp < 1000) return (xp - 500) / 500.0; // 500 points to next level
     return ((xp - 1000) % 1000) / 1000.0; // Infinite tiers
   }
-
 
   @override
   Widget build(BuildContext context) {

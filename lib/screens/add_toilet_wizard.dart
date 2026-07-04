@@ -11,6 +11,7 @@ import '../theme/sm_tokens.dart';
 import '../theme/sm_theme.dart';
 import '../theme/sm_widgets.dart';
 import '../main.dart' show showAppSnackBar;
+
 class AddToiletWizard extends StatefulWidget {
   final FirestoreService firestoreService;
   final String userId;
@@ -29,8 +30,10 @@ class AddToiletWizard extends StatefulWidget {
   State<AddToiletWizard> createState() => _AddToiletWizardState();
 }
 
-class _AddToiletWizardState extends State<AddToiletWizard> with SingleTickerProviderStateMixin {
-  int _addWizardStep = 1; // 1: Camera, 2: Map Location, 3: Category, 4: Details, 5: Success
+class _AddToiletWizardState extends State<AddToiletWizard>
+    with SingleTickerProviderStateMixin {
+  int _addWizardStep =
+      1; // 1: Camera, 2: Map Location, 3: Category, 4: Details, 5: Success
   String _addCategory = "govt";
   bool _addIsFree = true;
   String _addGender = "unisex";
@@ -43,10 +46,13 @@ class _AddToiletWizardState extends State<AddToiletWizard> with SingleTickerProv
   bool _addIsWestern = false;
   final TextEditingController _addNameController = TextEditingController();
   final TextEditingController _addLandmarkController = TextEditingController();
-  LatLng _selectedAddCoords = const LatLng(26.29, 73.03); // Default Jodhpur fallback
+  LatLng _selectedAddCoords = const LatLng(
+    26.29,
+    73.03,
+  ); // Default Jodhpur fallback
   LatLng? _userLocation;
   int _totalToiletCount = 0;
-  
+
   bool _isResolvingAddress = false;
 
   // Animation for +50 XP
@@ -66,20 +72,29 @@ class _AddToiletWizardState extends State<AddToiletWizard> with SingleTickerProv
     );
 
     _badgeOpacity = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween<double>(begin: 0.0, end: 1.0), weight: 20.0),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 0.0, end: 1.0),
+        weight: 20.0,
+      ),
       TweenSequenceItem(tween: ConstantTween<double>(1.0), weight: 60.0),
-      TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 0.0), weight: 20.0),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.0, end: 0.0),
+        weight: 20.0,
+      ),
     ]).animate(_badgeController);
 
-    _badgeSlide = Tween<double>(begin: 0.0, end: -60.0).animate(
-      CurvedAnimation(parent: _badgeController, curve: Curves.easeOut),
-    );
+    _badgeSlide = Tween<double>(
+      begin: 0.0,
+      end: -60.0,
+    ).animate(CurvedAnimation(parent: _badgeController, curve: Curves.easeOut));
   }
 
   Future<void> _fetchUserLocation() async {
     try {
       final pos = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
       ).timeout(const Duration(seconds: 5));
       if (mounted) {
         setState(() {
@@ -100,7 +115,10 @@ class _AddToiletWizardState extends State<AddToiletWizard> with SingleTickerProv
     }
     setState(() => _isResolvingAddress = true);
     try {
-      List<Placemark> placemarks = await placemarkFromCoordinates(target.latitude, target.longitude);
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        target.latitude,
+        target.longitude,
+      );
       if (placemarks.isNotEmpty && mounted) {
         setState(() {
           _isResolvingAddress = false;
@@ -129,21 +147,27 @@ class _AddToiletWizardState extends State<AddToiletWizard> with SingleTickerProv
     super.dispose();
   }
 
-
   // Called by the top-right ✕ button to fully exit the wizard.
   // Shows a discard-confirm dialog if the user has entered any data,
   // then calls widget.onClose() which returns to the Map tab.
   // The phone-Back / PopScope step-back path is SEPARATE and NOT routed here.
   Future<void> _handleCloseRequest() async {
-    final bool hasData = _addNameController.text.isNotEmpty ||
+    final bool hasData =
+        _addNameController.text.isNotEmpty ||
         _addLandmarkController.text.isNotEmpty;
     if (hasData) {
       final bool? confirm = await showDialog<bool>(
         context: context,
         builder: (dialogContext) => AlertDialog(
           backgroundColor: context.sm.surface,
-          title: Text("Discard new toilet?", style: TextStyle(color: context.sm.ink)),
-          content: Text("Your entered details will be lost.", style: TextStyle(color: context.sm.ink2)),
+          title: Text(
+            "Discard new toilet?",
+            style: TextStyle(color: context.sm.ink),
+          ),
+          content: Text(
+            "Your entered details will be lost.",
+            style: TextStyle(color: context.sm.ink2),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -151,7 +175,10 @@ class _AddToiletWizardState extends State<AddToiletWizard> with SingleTickerProv
             ),
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: Text("Discard", style: TextStyle(color: context.sm.statusClosed)),
+              child: Text(
+                "Discard",
+                style: TextStyle(color: context.sm.statusClosed),
+              ),
             ),
           ],
         ),
@@ -199,26 +226,45 @@ class _AddToiletWizardState extends State<AddToiletWizard> with SingleTickerProv
             const Spacer(),
             Center(
               child: Container(
-                width: 80.0, height: 80.0,
-                decoration: BoxDecoration(color: context.sm.brandSolid, shape: BoxShape.circle),
+                width: 80.0,
+                height: 80.0,
+                decoration: BoxDecoration(
+                  color: context.sm.brandSolid,
+                  shape: BoxShape.circle,
+                ),
                 child: const Icon(Icons.check, color: Colors.white, size: 48.0),
               ),
             ),
             const SizedBox(height: SmTokens.s24),
-            Text("Thank you! You helped everyone nearby.", textAlign: TextAlign.center, style: SmText.title.copyWith(color: context.sm.ink)),
+            Text(
+              "Thank you! You helped everyone nearby.",
+              textAlign: TextAlign.center,
+              style: SmText.title.copyWith(color: context.sm.ink),
+            ),
             const SizedBox(height: SmTokens.s8),
-            Text("+50 scout points added to your profile.", textAlign: TextAlign.center, style: SmText.body.copyWith(color: context.sm.ink2)),
+            Text(
+              "+50 scout points added to your profile.",
+              textAlign: TextAlign.center,
+              style: SmText.body.copyWith(color: context.sm.ink2),
+            ),
             const SizedBox(height: SmTokens.s12),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Icons.shield, color: context.sm.star, size: 20.0),
                 const SizedBox(width: SmTokens.s8),
-                Text("First Scout Badge Unlocked!", style: SmText.bodyStrong.copyWith(color: context.sm.star)),
+                Text(
+                  "First Scout Badge Unlocked!",
+                  style: SmText.bodyStrong.copyWith(color: context.sm.star),
+                ),
               ],
             ),
             const SizedBox(height: SmTokens.s16),
-            Text("ShauchMap now has $_totalToiletCount toilets.", textAlign: TextAlign.center, style: SmText.bodyStrong.copyWith(color: context.sm.brand)),
+            Text(
+              "ShauchMap now has $_totalToiletCount toilets.",
+              textAlign: TextAlign.center,
+              style: SmText.bodyStrong.copyWith(color: context.sm.brand),
+            ),
             const Spacer(),
             SmPrimaryButton(
               label: "Close",
@@ -248,13 +294,16 @@ class _AddToiletWizardState extends State<AddToiletWizard> with SingleTickerProv
                     SizedBox(
                       height: 200,
                       child: ClipRRect(
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(SmTokens.rCard)),
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(SmTokens.rCard),
+                        ),
                         child: Stack(
                           alignment: Alignment.center,
                           children: [
                             GoogleMap(
                               initialCameraPosition: CameraPosition(
-                                target: _userLocation ?? const LatLng(26.29, 73.03),
+                                target:
+                                    _userLocation ?? const LatLng(26.29, 73.03),
                                 zoom: 18.5,
                               ),
                               style: darkMapStyle,
@@ -263,7 +312,8 @@ class _AddToiletWizardState extends State<AddToiletWizard> with SingleTickerProv
                               onMapCreated: (controller) {},
                               onCameraMove: (position) {
                                 _selectedAddCoords = position.target;
-                                if (!_isResolvingAddress) setState(() => _isResolvingAddress = true);
+                                if (!_isResolvingAddress)
+                                  setState(() => _isResolvingAddress = true);
                               },
                               onCameraIdle: () {
                                 _reverseGeocode(_selectedAddCoords);
@@ -271,7 +321,11 @@ class _AddToiletWizardState extends State<AddToiletWizard> with SingleTickerProv
                             ),
                             Padding(
                               padding: const EdgeInsets.only(bottom: 24.0),
-                              child: Icon(Icons.location_on, color: context.sm.brandSolid, size: 48.0),
+                              child: Icon(
+                                Icons.location_on,
+                                color: context.sm.brandSolid,
+                                size: 48.0,
+                              ),
                             ),
                           ],
                         ),
@@ -281,15 +335,27 @@ class _AddToiletWizardState extends State<AddToiletWizard> with SingleTickerProv
                       padding: const EdgeInsets.all(SmTokens.s12),
                       decoration: BoxDecoration(
                         color: context.sm.surface,
-                        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(SmTokens.rCard)),
+                        borderRadius: const BorderRadius.vertical(
+                          bottom: Radius.circular(SmTokens.rCard),
+                        ),
                         border: Border(top: BorderSide(color: context.sm.line)),
                       ),
-                      child: Row(children: [
-                        Icon(Icons.my_location, color: context.sm.brand, size: 16),
-                        const SizedBox(width: SmTokens.s8),
-                        Text('Your location · drag to adjust',
-                          style: SmText.caption.copyWith(color: context.sm.ink2)),
-                      ]),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.my_location,
+                            color: context.sm.brand,
+                            size: 16,
+                          ),
+                          const SizedBox(width: SmTokens.s8),
+                          Text(
+                            'Your location · drag to adjust',
+                            style: SmText.caption.copyWith(
+                              color: context.sm.ink2,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -298,20 +364,34 @@ class _AddToiletWizardState extends State<AddToiletWizard> with SingleTickerProv
 
               SmCard(
                 padding: const EdgeInsets.all(SmTokens.s16),
-                child: Row(children: [
-                  Icon(Icons.camera_alt_outlined, color: context.sm.ink3),
-                  const SizedBox(width: SmTokens.s8),
-                  Text('Add photos', style: SmText.body.copyWith(color: context.sm.ink3)),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: context.sm.statusUnsure.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(SmTokens.rPill)),
-                    child: Text('v1.1', style: SmText.caption.copyWith(
-                      color: context.sm.statusUnsure, fontWeight: FontWeight.w800)),
-                  ),
-                ]),
+                child: Row(
+                  children: [
+                    Icon(Icons.camera_alt_outlined, color: context.sm.ink3),
+                    const SizedBox(width: SmTokens.s8),
+                    Text(
+                      'Add photos',
+                      style: SmText.body.copyWith(color: context.sm.ink3),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: context.sm.statusUnsure.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(SmTokens.rPill),
+                      ),
+                      child: Text(
+                        'v1.1',
+                        style: SmText.caption.copyWith(
+                          color: context.sm.statusUnsure,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: SmTokens.s24),
 
@@ -327,7 +407,8 @@ class _AddToiletWizardState extends State<AddToiletWizard> with SingleTickerProv
                   fillColor: context.sm.surface,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(SmTokens.rSmall),
-                    borderSide: BorderSide(color: context.sm.line)),
+                    borderSide: BorderSide(color: context.sm.line),
+                  ),
                 ),
               ),
               const SizedBox(height: SmTokens.s24),
@@ -338,10 +419,30 @@ class _AddToiletWizardState extends State<AddToiletWizard> with SingleTickerProv
                 spacing: SmTokens.s8,
                 runSpacing: SmTokens.s8,
                 children: [
-                  SmFilterChip(label: 'Public', icon: Icons.location_city_outlined, selected: _addCategory == 'government', onTap: () => setState(() => _addCategory = 'government')),
-                  SmFilterChip(label: 'Petrol pump', icon: Icons.local_gas_station_outlined, selected: _addCategory == 'fuel', onTap: () => setState(() => _addCategory = 'fuel')),
-                  SmFilterChip(label: 'Mall / Shop', icon: Icons.shopping_bag_outlined, selected: _addCategory == 'commercial', onTap: () => setState(() => _addCategory = 'commercial')),
-                  SmFilterChip(label: 'Station', icon: Icons.train_outlined, selected: _addCategory == 'station', onTap: () => setState(() => _addCategory = 'station')),
+                  SmFilterChip(
+                    label: 'Public',
+                    icon: Icons.location_city_outlined,
+                    selected: _addCategory == 'government',
+                    onTap: () => setState(() => _addCategory = 'government'),
+                  ),
+                  SmFilterChip(
+                    label: 'Petrol pump',
+                    icon: Icons.local_gas_station_outlined,
+                    selected: _addCategory == 'fuel',
+                    onTap: () => setState(() => _addCategory = 'fuel'),
+                  ),
+                  SmFilterChip(
+                    label: 'Mall / Shop',
+                    icon: Icons.shopping_bag_outlined,
+                    selected: _addCategory == 'commercial',
+                    onTap: () => setState(() => _addCategory = 'commercial'),
+                  ),
+                  SmFilterChip(
+                    label: 'Station',
+                    icon: Icons.train_outlined,
+                    selected: _addCategory == 'station',
+                    onTap: () => setState(() => _addCategory = 'station'),
+                  ),
                 ],
               ),
               const SizedBox(height: SmTokens.s24),
@@ -350,11 +451,23 @@ class _AddToiletWizardState extends State<AddToiletWizard> with SingleTickerProv
               const SizedBox(height: SmTokens.s8),
               Row(
                 children: [
-                  SmFilterChip(label: 'Unisex', selected: _addGender == 'unisex', onTap: () => setState(() => _addGender = 'unisex')),
+                  SmFilterChip(
+                    label: 'Unisex',
+                    selected: _addGender == 'unisex',
+                    onTap: () => setState(() => _addGender = 'unisex'),
+                  ),
                   const SizedBox(width: SmTokens.s8),
-                  SmFilterChip(label: 'Men', selected: _addGender == 'men', onTap: () => setState(() => _addGender = 'men')),
+                  SmFilterChip(
+                    label: 'Men',
+                    selected: _addGender == 'men',
+                    onTap: () => setState(() => _addGender = 'men'),
+                  ),
                   const SizedBox(width: SmTokens.s8),
-                  SmFilterChip(label: 'Women', selected: _addGender == 'women', onTap: () => setState(() => _addGender = 'women')),
+                  SmFilterChip(
+                    label: 'Women',
+                    selected: _addGender == 'women',
+                    onTap: () => setState(() => _addGender = 'women'),
+                  ),
                 ],
               ),
               const SizedBox(height: SmTokens.s24),
@@ -363,28 +476,67 @@ class _AddToiletWizardState extends State<AddToiletWizard> with SingleTickerProv
               const SizedBox(height: SmTokens.s8),
               Row(
                 children: [
-                  SmFilterChip(label: 'Free', selected: _addIsFree == true, onTap: () => setState(() => _addIsFree = true)),
+                  SmFilterChip(
+                    label: 'Free',
+                    selected: _addIsFree == true,
+                    onTap: () => setState(() => _addIsFree = true),
+                  ),
                   const SizedBox(width: SmTokens.s8),
-                  SmFilterChip(label: 'Pay (₹)', selected: _addIsFree == false, onTap: () => setState(() => _addIsFree = false)),
+                  SmFilterChip(
+                    label: 'Pay (₹)',
+                    selected: _addIsFree == false,
+                    onTap: () => setState(() => _addIsFree = false),
+                  ),
                 ],
               ),
               const SizedBox(height: SmTokens.s24),
 
               SmEyebrow("What's there? (all optional)"),
               const SizedBox(height: SmTokens.s4),
-              Text("Skip anything you don't know", style: SmText.caption.copyWith(color: context.sm.ink3)),
+              Text(
+                "Skip anything you don't know",
+                style: SmText.caption.copyWith(color: context.sm.ink3),
+              ),
               const SizedBox(height: SmTokens.s8),
               SmCard(
                 padding: const EdgeInsets.all(SmTokens.s16),
                 child: Column(
                   children: [
-                    _buildToggleRow("Water Available", _addHasWater, (val) => setState(() => _addHasWater = val)),
-                    _buildToggleRow("Soap Available", _addHasSoap, (val) => setState(() => _addHasSoap = val)),
-                    _buildToggleRow("Lock Working", _addHasLock, (val) => setState(() => _addHasLock = val)),
-                    _buildToggleRow("Western Style (seated)", _addIsWestern, (val) => setState(() => _addIsWestern = val)),
-                    _buildToggleRow("Wheelchair Accessible", _addHasWheelchair, (val) => setState(() => _addHasWheelchair = val)),
-                    _buildToggleRow("Baby Changing Station", _addHasBabyChange, (val) => setState(() => _addHasBabyChange = val)),
-                    _buildToggleRow("Sanitary Disposal", _addHasSanitaryDisposal, (val) => setState(() => _addHasSanitaryDisposal = val)),
+                    _buildToggleRow(
+                      "Water Available",
+                      _addHasWater,
+                      (val) => setState(() => _addHasWater = val),
+                    ),
+                    _buildToggleRow(
+                      "Soap Available",
+                      _addHasSoap,
+                      (val) => setState(() => _addHasSoap = val),
+                    ),
+                    _buildToggleRow(
+                      "Lock Working",
+                      _addHasLock,
+                      (val) => setState(() => _addHasLock = val),
+                    ),
+                    _buildToggleRow(
+                      "Western Style (seated)",
+                      _addIsWestern,
+                      (val) => setState(() => _addIsWestern = val),
+                    ),
+                    _buildToggleRow(
+                      "Wheelchair Accessible",
+                      _addHasWheelchair,
+                      (val) => setState(() => _addHasWheelchair = val),
+                    ),
+                    _buildToggleRow(
+                      "Baby Changing Station",
+                      _addHasBabyChange,
+                      (val) => setState(() => _addHasBabyChange = val),
+                    ),
+                    _buildToggleRow(
+                      "Sanitary Disposal",
+                      _addHasSanitaryDisposal,
+                      (val) => setState(() => _addHasSanitaryDisposal = val),
+                    ),
                   ],
                 ),
               ),
@@ -402,7 +554,8 @@ class _AddToiletWizardState extends State<AddToiletWizard> with SingleTickerProv
                   fillColor: context.sm.surface,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(SmTokens.rSmall),
-                    borderSide: BorderSide(color: context.sm.line)),
+                    borderSide: BorderSide(color: context.sm.line),
+                  ),
                 ),
               ),
             ],
@@ -427,19 +580,32 @@ class _AddToiletWizardState extends State<AddToiletWizard> with SingleTickerProv
                     return;
                   }
                   if (name.length < 5) {
-                    showAppSnackBar("Please enter a proper name like 'Clock Tower Public Toilet'", isError: true);
+                    showAppSnackBar(
+                      "Please enter a proper name like 'Clock Tower Public Toilet'",
+                      isError: true,
+                    );
                     return;
                   }
 
-                  String resolvedAddress = '${_selectedAddCoords.latitude.toStringAsFixed(4)}, ${_selectedAddCoords.longitude.toStringAsFixed(4)}';
+                  String resolvedAddress =
+                      '${_selectedAddCoords.latitude.toStringAsFixed(4)}, ${_selectedAddCoords.longitude.toStringAsFixed(4)}';
                   try {
-                    final placemarks = await placemarkFromCoordinates(_selectedAddCoords.latitude, _selectedAddCoords.longitude).timeout(const Duration(seconds: 5));
+                    final placemarks = await placemarkFromCoordinates(
+                      _selectedAddCoords.latitude,
+                      _selectedAddCoords.longitude,
+                    ).timeout(const Duration(seconds: 5));
                     if (placemarks.isNotEmpty) {
                       final p = placemarks.first;
-                      final parts = [p.street, p.subLocality, p.locality].where((s) => s != null && s.isNotEmpty).toList();
+                      final parts = [
+                        p.street,
+                        p.subLocality,
+                        p.locality,
+                      ].where((s) => s != null && s.isNotEmpty).toList();
                       if (parts.isNotEmpty) resolvedAddress = parts.join(', ');
                     }
-                  } catch (_) { /* keep coordinate fallback */ }
+                  } catch (_) {
+                    /* keep coordinate fallback */
+                  }
 
                   final Map<String, dynamic> data = {
                     'name': name,
@@ -466,15 +632,22 @@ class _AddToiletWizardState extends State<AddToiletWizard> with SingleTickerProv
 
                   try {
                     await widget.firestoreService.addToilet(data);
-                    await widget.firestoreService.addScoutPoints(widget.userId, 50);
-                    await widget.firestoreService.unlockBadge(widget.userId, 'first_scout');
+                    await widget.firestoreService.addScoutPoints(
+                      widget.userId,
+                      50,
+                    );
+                    await widget.firestoreService.unlockBadge(
+                      widget.userId,
+                      'first_scout',
+                    );
 
                     try {
                       final snapshot = await FirebaseFirestore.instance
                           .collection('toilets')
                           .count()
                           .get();
-                      if (mounted) setState(() => _totalToiletCount = snapshot.count ?? 0);
+                      if (mounted)
+                        setState(() => _totalToiletCount = snapshot.count ?? 0);
                     } catch (_) {}
 
                     fbus.Feedback.fire(fbus.FeedbackEvent.confirm);
@@ -489,14 +662,19 @@ class _AddToiletWizardState extends State<AddToiletWizard> with SingleTickerProv
                   } catch (e) {
                     if (!mounted) return;
                     CustomHapticsService.playHollowDecay();
-                    showAppSnackBar('Error submitting details: $e', isError: true);
+                    showAppSnackBar(
+                      'Error submitting details: $e',
+                      isError: true,
+                    );
                   }
                 },
               ),
               const SizedBox(height: SmTokens.s8),
-              Text('Only location is required',
+              Text(
+                'Only location is required',
                 style: SmText.caption.copyWith(color: context.sm.ink3),
-                textAlign: TextAlign.center),
+                textAlign: TextAlign.center,
+              ),
             ],
           ),
         ),
@@ -521,7 +699,12 @@ class _AddToiletWizardState extends State<AddToiletWizard> with SingleTickerProv
               child: Column(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(left: 20.0, right: 20.0, top: 12.0, bottom: 8.0),
+                    padding: const EdgeInsets.only(
+                      left: 20.0,
+                      right: 20.0,
+                      top: 12.0,
+                      bottom: 8.0,
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -529,19 +712,47 @@ class _AddToiletWizardState extends State<AddToiletWizard> with SingleTickerProv
                         if (_addWizardStep != 5)
                           Row(
                             children: [
-                              Container(width: 8, height: 8, decoration: BoxDecoration(color: context.sm.brandSolid, shape: BoxShape.circle)),
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: context.sm.brandSolid,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
                               const SizedBox(width: SmTokens.s8),
-                              Container(width: 8, height: 8, decoration: BoxDecoration(color: context.sm.soft, shape: BoxShape.circle)),
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: context.sm.soft,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
                               const SizedBox(width: SmTokens.s8),
-                              Container(width: 8, height: 8, decoration: BoxDecoration(color: context.sm.soft, shape: BoxShape.circle)),
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: context.sm.soft,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
                             ],
                           )
                         else
-                          Text("Success", style: SmText.title.copyWith(color: context.sm.ink)),
+                          Text(
+                            "Success",
+                            style: SmText.title.copyWith(color: context.sm.ink),
+                          ),
                         if (_addWizardStep != 5)
                           GestureDetector(
                             onTap: _handleCloseRequest,
-                            child: Icon(Icons.close, color: context.sm.ink, size: 24.0),
+                            child: Icon(
+                              Icons.close,
+                              color: context.sm.ink,
+                              size: 24.0,
+                            ),
                           )
                         else
                           const SizedBox(width: 24.0),
@@ -562,7 +773,10 @@ class _AddToiletWizardState extends State<AddToiletWizard> with SingleTickerProv
                     child: Opacity(
                       opacity: _badgeOpacity.value,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 8.0),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14.0,
+                          vertical: 8.0,
+                        ),
                         decoration: BoxDecoration(
                           color: context.sm.brandSolid,
                           borderRadius: BorderRadius.circular(20.0),
@@ -571,12 +785,14 @@ class _AddToiletWizardState extends State<AddToiletWizard> with SingleTickerProv
                               color: context.sm.brand.withValues(alpha: 0.3),
                               blurRadius: 10.0,
                               offset: const Offset(0, 4),
-                            )
+                            ),
                           ],
                         ),
                         child: Text(
                           "+50 XP",
-                          style: SmText.bodyStrong.copyWith(color: context.sm.onBrand),
+                          style: SmText.bodyStrong.copyWith(
+                            color: context.sm.onBrand,
+                          ),
                         ),
                       ),
                     ),

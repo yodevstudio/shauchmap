@@ -184,7 +184,6 @@ class _DetailSheetState extends State<DetailSheet>
     });
   }
 
-
   String _getOpenStatusText(Toilet toilet) {
     if (!toilet.isOpen) {
       return "Closed";
@@ -305,8 +304,8 @@ class _DetailSheetState extends State<DetailSheet>
 
     Future.delayed(const Duration(milliseconds: 100), () {
       if (!mounted) {
-      return;
-    }
+        return;
+      }
       setState(() => _isBookmarkAnimating = false);
     });
 
@@ -320,8 +319,8 @@ class _DetailSheetState extends State<DetailSheet>
       if (mounted) {
         showAppSnackBar("Error: $e", isError: true);
         if (!mounted) {
-      return;
-    }
+          return;
+        }
         setState(() => _localIsSaved = isSaved);
       }
     } finally {
@@ -820,7 +819,8 @@ class _DetailSheetState extends State<DetailSheet>
                           if (checks.isNotEmpty) {
                             final ts = checks.first['timestamp'];
                             if (ts != null) {
-                              hasRecent = DateTime.now()
+                              hasRecent =
+                                  DateTime.now()
                                       .difference((ts as Timestamp).toDate())
                                       .inHours <
                                   24;

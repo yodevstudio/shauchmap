@@ -299,9 +299,9 @@ class RetryScreen extends StatelessWidget {
                 const SizedBox(height: 8.0),
                 Text(
                   "Could not connect to servers.\nPlease check your network and try again.",
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: context.sm.ink2,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: context.sm.ink2),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24.0),
@@ -928,8 +928,8 @@ class _NavigationShellState extends State<NavigationShell>
                     onTap: () async {
                       Navigator.of(sheetCtx).pop();
                       if (!mounted) {
-        return;
-      }
+                        return;
+                      }
                       final selectedMode = await showTravelModeSheet(
                         ctx,
                         distanceMeters: distMeters,
@@ -954,8 +954,8 @@ class _NavigationShellState extends State<NavigationShell>
                     onTap: () async {
                       Navigator.of(sheetCtx).pop();
                       if (!mounted) {
-        return;
-      }
+                        return;
+                      }
                       await showModalBottomSheet(
                         context: context,
                         isScrollControlled: true,
@@ -1410,7 +1410,6 @@ class _NavigationShellState extends State<NavigationShell>
     );
   }
 
-
   Widget _buildActiveTabScreen() {
     return IndexedStack(
       index: _selectedTabIndex,
@@ -1485,8 +1484,8 @@ class _NavigationShellState extends State<NavigationShell>
         );
 
         if (!mounted) {
-        return;
-      }
+          return;
+        }
         if (sheetContext.mounted && Navigator.of(sheetContext).canPop()) {
           Navigator.of(sheetContext).pop();
         }
