@@ -32,6 +32,7 @@
 
 > **⚡ The one thing to know:** press **GO** from anywhere in the app. ShauchMap finds the nearest *usable* toilet right now, previews it on a mini-map with the walking time, and hands you off to Google Maps. One tap to the answer, one more to the directions.
 
+<!-- Replace with a real recording: docs/media/go-flow.mp4 -->
 <p align="center">
   <img src="docs/mockups/02-go-card.png" width="280" alt="The GO experience" />
 </p>
