@@ -27,16 +27,8 @@
 
 <br /><br />
 
-<!-- REAL DEVICE CAPTURES (HERO GRID) -->
-| The Instant "GO" Routing | Crowdsourced Trust Badges |
-| :---: | :---: |
-| <img src="docs/mockups/02-go-card.png" width="300" alt="ShauchMap GO Card Routing" /> | <img src="docs/mockups/03-detail.png" width="300" alt="ShauchMap Toilet Verification Sheet" /> |
-
-<br />
-
-| Live Map Density | Scout Leaderboard |
-| :---: | :---: |
-| <img src="docs/mockups/04-browse.png" width="280" alt="ShauchMap Nearby List" /> | <img src="docs/mockups/06-you.png" width="280" alt="ShauchMap Scout Profile" /> |
+<!-- THE SINGLE HERO SHOT (No repetition!) -->
+<img src="docs/mockups/02-go-card.png" width="280" alt="ShauchMap GO Card Routing" />
 
 </div>
 
