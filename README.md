@@ -1,4 +1,8 @@
 <p align="center">
+  <img src="docs/banner.png" width="100%" alt="ShauchMap — the nearest clean public toilet in India, one tap away" />
+</p>
+
+<p align="center">
   <a href="https://github.com/YoDevStudio/ShauchMap/actions"><img src="https://img.shields.io/github/actions/workflow/status/YoDevStudio/ShauchMap/ci.yml?branch=main&style=for-the-badge&logo=github&label=build" alt="Build" /></a>
   <img src="https://img.shields.io/badge/Flutter-3.x-02569B?style=for-the-badge&logo=flutter&logoColor=white" alt="Flutter" />
   <img src="https://img.shields.io/badge/Firebase-Auth%20%C2%B7%20Firestore-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" alt="Firebase" />
@@ -12,11 +16,12 @@
 <p align="center">
   <b>Find the nearest open, community-verified public toilet in India — and get there in one tap.</b>
   <br />
-  <sub>Physics before the formula. Freedom of movement, without fear.</sub>
+  <sub>Freedom of movement, without fear.</sub>
 </p>
 
 <p align="center">
   <a href="#-why-shauchmap">Why</a> ·
+  <a href="#-see-it-in-action">Demo</a> ·
   <a href="#-features">Features</a> ·
   <a href="#-screenshots">Screenshots</a> ·
   <a href="#-the-scout-system">Scouts</a> ·
@@ -33,8 +38,44 @@
 > **⚡ The one thing to know:** press **GO** from anywhere in the app. ShauchMap finds the nearest *usable* toilet right now, previews it on a mini-map with the walking time, and hands you off to Google Maps. One tap to the answer, one more to the directions.
 
 <p align="center">
-  <video src="docs/media/go-flow.mp4" width="280" autoplay loop muted playsinline></video>
+  <img src="docs/mockups/02-go-card.png" width="280" alt="The GO experience" />
 </p>
+
+---
+
+## 🎬 See it in action
+
+<!-- ───────────────────────────────────────────────────────────────────────────
+     HOW GITHUB VIDEO ACTUALLY WORKS (read once, then you'll never fight it again):
+       • A committed file (docs/media/*.mp4) will NEVER play inline. Not by
+         relative path, not by raw URL. GitHub only plays videos that were
+         drag-dropped into the editor, which produces a
+         https://github.com/user-attachments/assets/<uuid> link.
+       • Free GitHub plan = 10 MB per upload. Compress each clip under 10 MB
+         first (see the ffmpeg one-liner in the fix guide) or the drop fails.
+
+     TO ADD / REPLACE A CLIP:
+       1. Open this file on github.com and click the ✏️ pencil (edit).
+       2. Put your cursor on the blank line under the heading you want.
+       3. Drag the compressed .mp4 from your file explorer into the editor.
+       4. Wait for the upload bar; GitHub inserts the user-attachments link.
+       5. Commit. Done — it now plays inline for everyone.
+     ─────────────────────────────────────────────────────────────────────────── -->
+
+**⚡ The GO flow — nearest usable toilet, then Google Maps**
+
+<!-- ↓↓↓ Drop your compressed go-flow.mp4 on the blank line below, then delete this img fallback. ↓↓↓ -->
+<p align="center"><img src="docs/mockups/02-go-card.png" width="280" alt="The GO flow" /></p>
+
+
+**🔎 Smooth browsing & filtering**
+
+https://github.com/user-attachments/assets/7c36781a-6607-4534-aeaf-88a529a31351
+
+
+**➕ Quick contribution wizard**
+
+https://github.com/user-attachments/assets/8706f3f0-ec22-448e-8852-95f638a568a9
 
 ---
 
@@ -107,20 +148,6 @@ Long-press **GO** (or tap **Add** on your profile), drop a pin, tag what's there
   <img src="docs/mockups/05-add.png"     width="30%" alt="Add a toilet in under a minute" />
   <img src="docs/mockups/06-you.png"     width="30%" alt="You — scout profile and leaderboard" />
 </p>
-
-<br />
-
-| Smooth Browsing & Filtering | Quick Contribution Wizard |
-| :---: | :---: |
-| 
-
-https://github.com/user-attachments/assets/7c36781a-6607-4534-aeaf-88a529a31351
-
-
-
-https://github.com/user-attachments/assets/8706f3f0-ec22-448e-8852-95f638a568a9
-
- |
 
 ---
 
