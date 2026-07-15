@@ -1,8 +1,4 @@
 <p align="center">
-  <img src="docs/banner.png" width="100%" alt="ShauchMap — the nearest clean public toilet in India, one tap away" />
-</p>
-
-<p align="center">
   <a href="https://github.com/YoDevStudio/ShauchMap/actions"><img src="https://img.shields.io/github/actions/workflow/status/YoDevStudio/ShauchMap/ci.yml?branch=main&style=for-the-badge&logo=github&label=build" alt="Build" /></a>
   <img src="https://img.shields.io/badge/Flutter-3.x-02569B?style=for-the-badge&logo=flutter&logoColor=white" alt="Flutter" />
   <img src="https://img.shields.io/badge/Firebase-Auth%20%C2%B7%20Firestore-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" alt="Firebase" />
