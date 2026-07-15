@@ -112,7 +112,15 @@ Long-press **GO** (or tap **Add** on your profile), drop a pin, tag what's there
 
 | Smooth Browsing & Filtering | Quick Contribution Wizard |
 | :---: | :---: |
-| <video src="docs/media/browse.mp4" width="280" autoplay loop muted playsinline></video> | <video src="docs/media/add-toilet.mp4" width="280" autoplay loop muted playsinline></video> |
+| 
+
+https://github.com/user-attachments/assets/7c36781a-6607-4534-aeaf-88a529a31351
+
+
+
+https://github.com/user-attachments/assets/8706f3f0-ec22-448e-8852-95f638a568a9
+
+ |
 
 ---
 
