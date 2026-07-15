@@ -64,8 +64,11 @@
 
 **⚡ The GO flow — nearest usable toilet, then Google Maps**
 
-<!-- ↓↓↓ Drop your compressed go-flow.mp4 on the blank line below, then delete this img fallback. ↓↓↓ -->
-<p align="center"><img src="docs/mockups/02-go-card.png" width="280" alt="The GO flow" /></p>
+
+
+https://github.com/user-attachments/assets/69757eda-120c-4e90-91fb-5220c550a4ba
+
+
 
 
 **🔎 Smooth browsing & filtering**
