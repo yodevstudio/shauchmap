@@ -1,5 +1,9 @@
+<h1 align="center">ShauchMap — शौच Map</h1>
+
 <p align="center">
-  <img src="docs/banner.png" width="100%" alt="ShauchMap — the nearest clean public toilet in India, one tap away" />
+  <b>Find the nearest open, community-verified public toilet in India — and get there in one tap.</b>
+  <br />
+  <sub>Physics before the formula. Freedom of movement, without fear.</sub>
 </p>
 
 <p align="center">
