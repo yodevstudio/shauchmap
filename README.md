@@ -32,9 +32,8 @@
 
 > **⚡ The one thing to know:** press **GO** from anywhere in the app. ShauchMap finds the nearest *usable* toilet right now, previews it on a mini-map with the walking time, and hands you off to Google Maps. One tap to the answer, one more to the directions.
 
-<!-- Replace with a real recording: docs/media/go-flow.mp4 -->
 <p align="center">
-  <img src="docs/mockups/02-go-card.png" width="280" alt="The GO experience" />
+  <video src="docs/media/go-flow.mp4" width="280" autoplay loop muted playsinline></video>
 </p>
 
 ---
@@ -109,7 +108,11 @@ Long-press **GO** (or tap **Add** on your profile), drop a pin, tag what's there
   <img src="docs/mockups/06-you.png"     width="30%" alt="You — scout profile and leaderboard" />
 </p>
 
-> _Add short screen recordings to `docs/media/` and embed them here — e.g. `go-flow.mp4`, `browse.mp4`, `add-toilet.mp4`. GitHub plays MP4s inline._
+<br />
+
+| Smooth Browsing & Filtering | Quick Contribution Wizard |
+| :---: | :---: |
+| <video src="docs/media/browse.mp4" width="280" autoplay loop muted playsinline></video> | <video src="docs/media/add-toilet.mp4" width="280" autoplay loop muted playsinline></video> |
 
 ---
 
