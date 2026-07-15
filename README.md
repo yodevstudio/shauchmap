@@ -1,49 +1,48 @@
-<h1 align="center">ShauchMap — शौच Map</h1>
+<div align="center">
 
-<p align="center">
-  <b>Find the nearest open, community-verified public toilet in India — and get there in one tap.</b>
-  <br />
-  <sub>Physics before the formula. Freedom of movement, without fear.</sub>
-</p>
+# ShauchMap — शौच Map
+**Find the nearest open, community-verified public toilet in India — and get there in one tap.**
+<br />
+<sub>Physics before the formula. Freedom of movement, without fear.</sub>
 
-<p align="center">
-  <a href="https://github.com/YoDevStudio/ShauchMap/actions"><img src="https://img.shields.io/github/actions/workflow/status/YoDevStudio/ShauchMap/ci.yml?branch=main&style=for-the-badge&logo=github&label=build" alt="Build" /></a>
-  <img src="https://img.shields.io/badge/Flutter-3.x-02569B?style=for-the-badge&logo=flutter&logoColor=white" alt="Flutter" />
-  <img src="https://img.shields.io/badge/Firebase-Auth%20%C2%B7%20Firestore-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" alt="Firebase" />
-  <img src="https://img.shields.io/badge/Platform-Android-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android" />
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-11A06F?style=for-the-badge" alt="MIT License" /></a>
-  <a href="https://github.com/YoDevStudio/ShauchMap/releases"><img src="https://img.shields.io/github/v/release/YoDevStudio/ShauchMap?style=for-the-badge&color=0F8A60" alt="Release" /></a>
-</p>
+<br /><br />
 
-<h1 align="center">ShauchMap — शौच Map</h1>
+[![CI](https://github.com/YoDevStudio/ShauchMap/actions/workflows/ci.yml/badge.svg)](https://github.com/YoDevStudio/ShauchMap/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/YoDevStudio/ShauchMap?style=flat-square&color=00A67E)](https://github.com/YoDevStudio/ShauchMap/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+[![Flutter](https://img.shields.io/badge/Built_with-Flutter-02569B?style=flat-square&logo=flutter)](https://flutter.dev)
 
-<p align="center">
-  <b>Find the nearest open, community-verified public toilet in India — and get there in one tap.</b>
-  <br />
-  <sub>Physics before the formula. Freedom of movement, without fear.</sub>
-</p>
+<br /><br />
 
-<p align="center">
-  <a href="#-why-shauchmap">Why</a> ·
-  <a href="#-features">Features</a> ·
-  <a href="#-screenshots">Screenshots</a> ·
-  <a href="#-the-scout-system">Scouts</a> ·
-  <a href="#-tech-stack">Tech</a> ·
-  <a href="#-architecture">Architecture</a> ·
-  <a href="#-getting-started">Get started</a> ·
-  <a href="#-permissions">Permissions</a> ·
-  <a href="#-roadmap">Roadmap</a> ·
-  <a href="#-contributing">Contribute</a>
-</p>
+<a href="#-why-shauchmap">Why</a> ·
+<a href="#-features">Features</a> ·
+<a href="#-screenshots">Screenshots</a> ·
+<a href="#-the-scout-system">Scouts</a> ·
+<a href="#-tech-stack">Tech</a> ·
+<a href="#-architecture">Architecture</a> ·
+<a href="#-getting-started">Get started</a> ·
+<a href="#-permissions">Permissions</a> ·
+<a href="#-roadmap">Roadmap</a> ·
+<a href="#-contributing">Contribute</a>
+
+<br /><br />
+
+<!-- REAL DEVICE CAPTURES (HERO GRID) -->
+| The Instant "GO" Routing | Crowdsourced Trust Badges |
+| :---: | :---: |
+| <img src="docs/mockups/02-go-card.png" width="300" alt="ShauchMap GO Card Routing" /> | <img src="docs/mockups/03-detail.png" width="300" alt="ShauchMap Toilet Verification Sheet" /> |
+
+<br />
+
+| Live Map Density | Scout Leaderboard |
+| :---: | :---: |
+| <img src="docs/mockups/04-browse.png" width="280" alt="ShauchMap Nearby List" /> | <img src="docs/mockups/06-you.png" width="280" alt="ShauchMap Scout Profile" /> |
+
+</div>
 
 <br />
 
 > **⚡ The one thing to know:** press **GO** from anywhere in the app. ShauchMap finds the nearest *usable* toilet right now, previews it on a mini-map with the walking time, and hands you off to Google Maps. One tap to the answer, one more to the directions.
-
-<!-- Replace with a real recording: docs/media/go-flow.mp4 -->
-<p align="center">
-  <img src="docs/mockups/02-go-card.png" width="280" alt="The GO experience" />
-</p>
 
 ---
 
