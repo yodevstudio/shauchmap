@@ -14,13 +14,16 @@
 - [ ] ♻️ Refactor / chore
 
 ## Screenshots / recording
-<!-- For any UI change, add a before/after. Compare against the design mockups. -->
+<!-- For any UI change, add a before/after. -->
 
 ## Checklist
-- [ ] `flutter analyze` is clean (zero errors)
-- [ ] `dart format .` applied
-- [ ] Uses design tokens (`context.sm.*`, `SmText.*`, `SmTokens.*`) — no hardcoded colours/spacing
-- [ ] No `.withOpacity()`, no `BackdropFilter`/blur, no custom-canvas markers
-- [ ] Did **not** modify the `Toilet` model or its Firestore serialization
+Only check the boxes that actually apply to this PR — a docs-only or backend-only change won't touch most of these.
+
 - [ ] No secrets/keys committed
-- [ ] Tested on a real device
+- [ ] Android: `flutter analyze` is clean, `dart format .` applied, `flutter test` passes
+- [ ] Android UI: uses design tokens (`context.sm.*`, `SmText.*`, `SmTokens.*`) — no hardcoded colours/spacing; no `.withOpacity()`, no `BackdropFilter`/blur, no custom-canvas markers
+- [ ] Android: did **not** modify the `Toilet` model or its Firestore serialization without updating both adapters
+- [ ] Android runtime/UI change: tested on a real device (required for these; not required for docs-only or backend-only changes)
+- [ ] Instant: `npm run typecheck && npm run lint && npm test` pass
+- [ ] Shared core: `dart analyze && dart test` pass (in `packages/shauchmap_core`)
+- [ ] Rules/Functions: relevant suite in `test/rules/` or `functions/` passes

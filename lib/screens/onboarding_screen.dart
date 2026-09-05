@@ -159,7 +159,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ),
         const SizedBox(height: SmTokens.s12),
         Text(
-          '7,741 verified locations.\nOpen statuses. Community-checked.',
+          '7,741 mapped locations.\nCommunity-checked where people have been.',
           style: SmText.body.copyWith(color: c.ink2),
           textAlign: TextAlign.center,
         ),
@@ -176,7 +176,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         _circle(c.brandSolid, Icons.touch_app_outlined, 44),
         const SizedBox(height: SmTokens.s24),
         Text(
-          'One tap. Nearest open toilet.',
+          'One tap. Nearest toilet.',
           style: SmText.title.copyWith(color: c.ink),
           textAlign: TextAlign.center,
         ),
@@ -186,7 +186,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           '1',
           Icons.my_location_rounded,
           'Tap GO',
-          'Finds the closest open toilet instantly',
+          'Finds the closest toilet instantly',
         ),
         const SizedBox(height: SmTokens.s16),
         _howRow(
@@ -210,35 +210,37 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         _circle(c.statusOpen, Icons.palette_outlined, 28),
         const SizedBox(height: SmTokens.s16),
         Text(
-          'What the colours mean',
+          'What the status means',
           style: SmText.title.copyWith(color: c.ink),
         ),
         const SizedBox(height: SmTokens.s20),
         _legendRow(
           c,
+          c.statusUnsure,
+          Icons.help_outline,
+          'Status unconfirmed',
+          'Most toilets — mapped, but no one has checked recently',
+        ),
+        _legendRow(
+          c,
           c.statusOpen,
           Icons.check_circle_outline,
-          'Open now',
-          'Confirmed usable right now',
+          'Recent checks indicate open',
+          'Someone confirmed it in the last hour',
         ),
         _legendRow(
           c,
           c.statusClosed,
           Icons.schedule,
-          'Closed',
-          'Check back later',
-        ),
-        _legendRow(
-          c,
-          c.statusUnsure,
-          Icons.help_outline,
-          'Needs check',
-          'Not verified recently',
+          'Recent checks indicate closed or unusable',
+          'A recent condition check flagged a problem',
         ),
         const SizedBox(height: SmTokens.s12),
         SmCard(
           child: Text(
-            'Colour is never the only signal — we always show a word and icon too.',
+            'We only show "open" or "closed" when a recent condition check '
+            'backs it. Everything else is "unconfirmed" — never a guess '
+            'dressed up as a fact.',
             style: SmText.caption.copyWith(color: c.ink2),
           ),
         ),

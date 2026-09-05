@@ -1,0 +1,255 @@
+rules_version = '2';
+
+// =============================================================================
+// ShauchMap — Firestore Security Rules
+//
+//   This file is the actual access-control enforcement for ShauchMap's
+//   Firestore data — the client code (Android, Instant) cannot bypass it.
+//   Deployment to production is a separate, explicit step from committing a
+//   change here; check the Firebase Console (or `firebase firestore:rules:
+//   release` history) for what is currently live if that matters for your
+//   purposes.
+//
+//   CURRENT-RELEASE SAFETY NOTE: ShauchMap has a public GitHub Release that
+//   anyone may download and install, so the installed-client base is
+//   uncontrolled — an old or modified client could try to call any client-side
+//   API regardless of what the shipped UI exposes. Under the current server
+//   policy, NO client — old, new, honest, or modified — may create a toilet
+//   record: `/toilets` `allow create: if false`. This is the real SERVER boundary;
+//   the Dart `RolloutConfig.addToiletEnabled` flag (see
+//   lib/config/rollout_config.dart) is only a shipped-client UX gate on top
+//   of it, not a security boundary in itself. A future, more permissive
+//   create contract (field allow-list, range/type validation) is expected
+//   once a minimum-supported-client-version mechanism exists — see this
+//   file's own git history for the contract shape under consideration.
+//
+// TRUST MODEL
+//
+//   1. One observation document per signed-in ACCOUNT per toilet, enforced
+//      STRUCTURALLY: the sub-collection document id IS the author's uid for
+//      ratings / check_ins / condition_checks / reports / votes. A modified
+//      client cannot mint extra rows under random ids.
+//        - ratings          : owner create + own-edit. Doc = opinion.
+//        - check_ins        : owner create; update only after a 4h server gap
+//                             (the cool-down is a RULE, not client-only).
+//        - condition_checks : owner create + own-edit = LATEST observation
+//                             per account (NOT immutable history).
+//        - reports          : owner create + own-edit (correct your own reason).
+//        - votes            : owner create/update/delete.
+//   2. Every freshness-sensitive timestamp on create/update MUST equal
+//      request.time (i.e. FieldValue.serverTimestamp()). Client-supplied
+//      past / future / arbitrary Timestamps are denied.
+//   3. /toilets/{id} has NO client update path (allow update: if false) and
+//      NO delete. Derived aggregates (star_rating, votes, freshness, women-
+//      safe, warden, flags) are never client-authored; the one-toilet
+//      DetailSheet computes what it needs at read time from the sub-collections.
+//   4. /toilets create: DENIED to all clients under the current server policy
+//      (`allow create: if false`). A future create contract (strict field
+//      allow-list + range/type validation + a GEO INVARIANT requiring
+//      position.geopoint to equal the top-level latitude/longitude) is
+//      under consideration for once a minimum-supported-client-version
+//      mechanism exists. Documented residual of that future contract:
+//      Firestore Rules cannot hash, so they cannot verify position.geohash
+//      was derived from the GeoPoint — a Cloud Function or on-read recompute
+//      would be needed. Not relevant while create is fully denied.
+//   5. /users/{uid} private, owner-only incl. delete. /public_profiles/{uid}
+//      is a cosmetic, world-readable 4-field projection; scout_points there is
+//      client-authored → self-reported, NOT trusted (documented).
+//
+// Default: deny.
+// =============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --------------------------------------------------------------- helpers
+    function signedIn() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+    function isTriState(v) {
+      return v == 'yes' || v == 'no' || v == 'unknown';
+    }
+    // The named field on the incoming write must be the server commit time.
+    function serverTs(field) {
+      return request.resource.data[field] == request.time;
+    }
+    function strLen(v, maxLen) {
+      return v is string && v.size() <= maxLen;
+    }
+
+    // ================================================================ toilets
+    match /toilets/{toiletId} {
+
+      allow read: if true;
+
+      // ---- CREATE: DENIED to ALL clients under the current server policy.
+      //
+      // ShauchMap has a public GitHub Release that anyone may download and
+      // install, so the pre-Truth-V2 client base is uncontrolled. An old
+      // client that read a newer native `truth_v2` toilet with its legacy
+      // parser would fabricate "open / free / government / unisex" state.
+      // Therefore NO client — old, new, honest, or modified, with any
+      // payload, and regardless of the Dart `ADD_TOILET_ENABLED` flag — may
+      // create a toilet while these rules are live.
+      //
+      // This `if false` is the SERVER boundary. `RolloutConfig.addToiletEnabled`
+      // (default false) is only a shipped-client UX / accidental-use gate.
+      //
+      // A future create contract (strict field allow-list + type/range
+      // checks + enums + the geo invariant) is preserved in this file's own
+      // git history and should only be re-enabled once a minimum-supported-
+      // app-version policy is enforceable; it is a one-line change here
+      // (`allow create: if <that contract>;`).
+      allow create: if false;
+
+      // NO client update. NO client delete. Admin SDK / Cloud Functions bypass
+      // rules and are unaffected — a future Cloud Function is the only writer
+      // that should ever touch a toilet doc after creation.
+      allow update: if false;
+      allow delete: if false;
+
+      // ---- /toilets/{id}/ratings/{uid} ---------------------------------
+      // Doc id IS the author uid → exactly one rating per account. Owner may
+      // create and later edit their own. No user_id / user_name stored: the
+      // review is rendered as "Community review". (The document id is still
+      // account-derived — this is not full anonymisation.)
+      match /ratings/{ratingId} {
+        allow read: if true;
+        allow create, update: if isOwner(ratingId)
+          && request.resource.data.keys().hasOnly(
+               ['stars', 'tags', 'note', 'timestamp'])
+          && request.resource.data.keys().hasAll(['stars', 'timestamp'])
+          && request.resource.data.stars is int
+          && request.resource.data.stars >= 1
+          && request.resource.data.stars <= 5
+          && serverTs('timestamp')
+          && (!('tags' in request.resource.data)
+              || request.resource.data.tags is list)
+          && (!('note' in request.resource.data)
+              || strLen(request.resource.data.note, 500));
+        allow delete: if false;
+      }
+
+      // ---- /toilets/{id}/check_ins/{uid} -----------------------------
+      // "This account was physically here at request.time." Doc id == uid.
+      // CREATE: first check-in. UPDATE: only the timestamp, and only once the
+      // previous check-in is >= 4h old — a SERVER-ENFORCED cool-down.
+      match /check_ins/{checkInId} {
+        allow read: if isOwner(checkInId);
+        allow create: if isOwner(checkInId)
+          && request.resource.data.keys().hasOnly(['timestamp'])
+          && serverTs('timestamp');
+        allow update: if isOwner(checkInId)
+          && request.resource.data.keys().hasOnly(['timestamp'])
+          && serverTs('timestamp')
+          && resource.data.timestamp is timestamp
+          && request.time >= resource.data.timestamp + duration.value(4, 'h');
+        allow delete: if false;
+      }
+
+      // ---- /toilets/{id}/condition_checks/{uid} --------------------
+      // LATEST tri-state observation per account (NOT immutable history —
+      // longitudinal history is a future server-side concern). Doc id == uid;
+      // owner create + own-edit. UNKNOWN is first-class. No women-safety field.
+      match /condition_checks/{checkId} {
+        allow read: if true;
+        allow create, update: if isOwner(checkId)
+          && request.resource.data.keys().hasOnly(
+               ['open', 'water', 'usable', 'lock', 'timestamp'])
+          && request.resource.data.keys().hasAll(
+               ['open', 'water', 'usable', 'timestamp'])
+          && isTriState(request.resource.data.open)
+          && isTriState(request.resource.data.water)
+          && isTriState(request.resource.data.usable)
+          && (!('lock' in request.resource.data)
+              || isTriState(request.resource.data.lock))
+          && serverTs('timestamp');
+        allow delete: if false;
+      }
+
+      // ---- legacy /toilets/{id}/quick_checks/{id} ------------------
+      // Deprecated. 0 exist in production. Readable; no writes.
+      match /quick_checks/{quickCheckId} {
+        allow read: if true;
+        allow write: if false;
+      }
+
+      // ---- /toilets/{id}/reports/{uid} ---------------------------
+      // One report per account per toilet (doc id == uid). Owner create +
+      // own-edit (correct your own reason). Owner-read only — not publicly
+      // enumerable. No automatic flagging anywhere.
+      match /reports/{reportId} {
+        allow read: if isOwner(reportId);
+        allow create, update: if isOwner(reportId)
+          && request.resource.data.keys().hasOnly(['reason', 'created_at'])
+          && request.resource.data.reason in [
+               'Closed permanently', 'Wrong location',
+               "Doesn't exist", 'Inappropriate']
+          && serverTs('created_at');
+        allow delete: if false;
+      }
+
+      // ---- /toilets/{id}/votes/{uid} --------------------------
+      // One vote per account (doc id == uid). Counts derived at read time.
+      match /votes/{voterId} {
+        allow read: if signedIn();
+        allow create, update: if isOwner(voterId)
+          && request.resource.data.keys().hasOnly(['is_upvote', 'timestamp'])
+          && request.resource.data.is_upvote is bool
+          && serverTs('timestamp');
+        allow delete: if isOwner(voterId);
+      }
+    }
+
+    // ================================================================== users
+    // Private. Owner-only for everything, INCLUDING delete (account deletion).
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+
+      // Per-user PRIVATE cosmetic counter ("you've checked this toilet N
+      // times"). Confers no authority; nothing authoritative reads it; never
+      // called a "warden" in public UI. Allow-listed to a single int field.
+      match /toilet_wardens/{toiletId} {
+        allow read: if isOwner(userId);
+        allow create, update: if isOwner(userId)
+          && request.resource.data.keys().hasOnly(['verify_count'])
+          && request.resource.data.verify_count is int
+          && request.resource.data.verify_count >= 0;
+        allow delete: if isOwner(userId);
+      }
+    }
+
+    // ======================================================= public_profiles
+    // World-readable leaderboard row. EXACTLY four cosmetic fields. No email,
+    // no provider data. scout_points is client-authored → self-reported, NOT
+    // trusted (documented). updated_at must be the server time.
+    match /public_profiles/{userId} {
+      allow read: if true;
+      allow create, update: if isOwner(userId)
+        && request.resource.data.keys().hasOnly(
+             ['name', 'photo_url', 'scout_points', 'updated_at'])
+        && serverTs('updated_at')
+        && (!('name' in request.resource.data)
+            || strLen(request.resource.data.name, 80))
+        && (!('photo_url' in request.resource.data)
+            || request.resource.data.photo_url == null
+            || strLen(request.resource.data.photo_url, 500))
+        && (!('scout_points' in request.resource.data)
+            || ((request.resource.data.scout_points is int
+                 || request.resource.data.scout_points is float)
+                && request.resource.data.scout_points >= 0));
+      allow delete: if isOwner(userId);
+    }
+
+    // Everything else: denied.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

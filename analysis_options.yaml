@@ -4,9 +4,11 @@ include: package:flutter_lints/flutter.yaml
 
 analyzer:
   errors:
-    uri_does_not_exist: ignore
-    undefined_identifier: ignore
     curly_braces_in_flow_control_structures: ignore
+  exclude:
+    - build/**
+    - android/**
+    - "**/node_modules/**"
 
 linter:
   # The lint rules applied to this project can be customized in the

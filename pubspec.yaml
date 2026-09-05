@@ -1,5 +1,5 @@
 name: shauchmap_app
-description: "ShauchMap — Find the nearest clean public toilet in India."
+description: "ShauchMap — public-sanitation reliability with explicit mapped/evidence/Unknown semantics."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+1
+version: 1.0.3+6
 
 environment:
   sdk: ^3.12.0
@@ -31,13 +31,18 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # The single authoritative pure-Dart ShauchMap domain core
+  # (Truth V2 / Evidence V2 / GO V2 + presentation). Also compiled to JS for
+  # the ShauchMap Instant web client. Pure Dart — no Flutter/Firebase/geolocator.
+  shauchmap_core:
+    path: packages/shauchmap_core
+
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   google_maps_flutter: ^2.11.0
   google_maps_flutter_android: any
   google_maps_flutter_platform_interface: any
-  http: ^1.2.0
   geolocator: ^14.0.2
   flutter_compass: ^0.8.1
   permission_handler: ^12.0.1
@@ -48,6 +53,15 @@ dependencies:
   url_launcher: ^6.2.6
   share_plus: ^7.2.1
   image_picker: ^1.1.2
+  # Field Audit Mode (internal, --dart-define=FIELD_AUDIT_MODE=true): durable
+  # local directory for offline audit records + photos + exports. Already
+  # resolved transitively; promoted to direct dependencies.
+  path_provider: ^2.1.5
+  # ZIP for the offline "evidence backup" bundle (records JSON + completed-only
+  # analysis CSV/JSON + photos + manifest). Mature pure-Dart. Already present as
+  # a transitive dependency; promoted to a direct dependency. `^4.0.0` currently
+  # resolves to archive 4.2.0 in pubspec.lock. No upgrade requested.
+  archive: ^4.0.0
   intl: ^0.20.2
   geocoding: ^2.1.0
   connectivity_plus: ^6.0.0

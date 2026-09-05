@@ -6,17 +6,32 @@ body:
   - type: markdown
     attributes:
       value: |
-        The best way to fix data is **inside the app** (add/verify it directly).
-        Use this form for anything you can't fix in-app, or to flag bad entries.
+        Use this form for **stable, identity-level data problems** — a wrong
+        location, a duplicate entry, or a facility that's permanently gone.
+        This is a report for a maintainer to review, not an automatic fix —
+        creating or editing a mapped facility is currently paused app-wide.
+
+        **This is not an urgent or current-condition channel.** GitHub Issues
+        are public and not monitored in real time. For a facility's *current*
+        condition — closed right now, out of water, needs a flag — use the
+        Android app's **Condition Check** action instead; that's the only
+        signal that establishes current condition. Ratings and votes are
+        opinion only, check-ins are presence/progression bookkeeping, and
+        in-app reports are for moderation — none of those independently
+        establish current condition either.
+
+        Please describe the **facility's** location below (area, landmark, or
+        coordinates) — there's no need to share your own location or any other
+        personal information in this form.
   - type: dropdown
     id: kind
     attributes:
       label: What's the issue?
       options:
-        - Toilet is missing (should be added)
+        - Toilet is missing from the map
         - Toilet is permanently closed / gone
-        - Wrong details (hours, water, cost, etc.)
-        - Not safe / should be flagged
+        - Wrong details (location, cost, category, etc.)
+        - Concerning entry — should be reviewed
         - Duplicate entry
         - Other
     validations:

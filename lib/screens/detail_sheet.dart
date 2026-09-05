@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -55,6 +57,44 @@ class _DetailSheetState extends State<DetailSheet>
   bool? _localIsSaved;
   late final Stream<List<Map<String, dynamic>>> _ratingsStream;
 
+  // PASSIVE EXPIRY : the condition StreamBuilder gets no new event just
+  // because 60 minutes elapsed, so a one-shot Timer (no polling) forces ONE
+  // rebuild at the direct summary's conservative `validUntilMs`, after which
+  // the verdict drops to UNKNOWN until a fresh Firestore snapshot recomputes it.
+  Timer? _condExpiryTimer;
+  int? _condExpiryScheduledMs;
+
+  void _scheduleConditionExpiry(int? validUntilMs) {
+    if (validUntilMs == _condExpiryScheduledMs) return;
+    _condExpiryScheduledMs = validUntilMs;
+    _condExpiryTimer?.cancel();
+    _condExpiryTimer = null;
+    if (validUntilMs == null) return;
+    final d =
+        DateTime.fromMillisecondsSinceEpoch(
+          validUntilMs,
+        ).difference(DateTime.now()) +
+        const Duration(milliseconds: 50);
+    if (d.isNegative) return;
+    _condExpiryTimer = Timer(d, () {
+      if (mounted) setState(() {});
+    });
+  }
+
+  // Read-time aggregates (2026-09-02 trust model): computed by Firestore from
+  // the owner-scoped sub-collections (one doc per account), NOT read off a
+  // client-writable parent field. Null until loaded / on query failure —
+  // a failed query is NOT the same as "zero", so the UI omits the figure
+  // rather than showing a fabricated 0.
+  ({int count, double average})? _ratingSummary;
+
+  // Vote aggregate availability. Vote docs are readable only to SIGNED-IN
+  // accounts, so getVoteSummary() fails for signed-out viewers. null/false =>
+  // the thumbs row shows "—", NOT the frozen parent 0/0 as if it were real.
+  // Set true once we have a real derived count OR the user has cast a vote
+  // (their optimistic local count is then at least their own truth).
+  bool? _voteAggOk;
+
   // Animation for +20 XP floating badge
   late AnimationController _badgeController;
   late Animation<double> _badgeOpacity;
@@ -98,10 +138,36 @@ class _DetailSheetState extends State<DetailSheet>
           })
           .catchError((_) {});
     }
+
+    _loadAggregates();
+  }
+
+  Future<void> _loadAggregates() async {
+    final rating = await _firestoreService.getRatingSummary(widget.toilet.id);
+    final votes = await _firestoreService.getVoteSummary(widget.toilet.id);
+    if (!mounted) return;
+    setState(() {
+      // A failed aggregation query is "unavailable", not "zero": leave the
+      // figure unset / the model counters untouched rather than paint a 0.
+      _ratingSummary = rating.ok
+          ? (count: rating.count, average: rating.average)
+          : null;
+      _voteAggOk = votes.ok;
+      if (votes.ok) {
+        widget.toilet.upvoteCount = votes.up;
+        widget.toilet.downvoteCount = votes.down;
+      } else {
+        debugPrint(
+          'DetailSheet: vote summary unavailable (signed-out, or query '
+          'failed) — thumbs row shows "—", not a fabricated 0.',
+        );
+      }
+    });
   }
 
   @override
   void dispose() {
+    _condExpiryTimer?.cancel();
     _badgeController.dispose();
     super.dispose();
   }
@@ -110,7 +176,11 @@ class _DetailSheetState extends State<DetailSheet>
     final c = context.sm;
     final active = _userVote == up;
     final accent = up ? c.statusOpen : c.statusClosed;
-    final count = up ? widget.toilet.upvoteCount : widget.toilet.downvoteCount;
+    // "—" until we have a real derived count (or the viewer has voted). Never
+    // present the frozen parent 0/0 as a genuine aggregate.
+    final String countLabel = _voteAggOk == true
+        ? '${up ? widget.toilet.upvoteCount : widget.toilet.downvoteCount}'
+        : '—';
     return GestureDetector(
       onTap: () => _handleVote(up),
       child: AnimatedContainer(
@@ -134,7 +204,7 @@ class _DetailSheetState extends State<DetailSheet>
             ),
             const SizedBox(width: SmTokens.s4),
             Text(
-              '$count',
+              countLabel,
               style: SmText.caption.copyWith(
                 color: active ? accent : c.ink3,
                 fontWeight: FontWeight.w800,
@@ -184,17 +254,6 @@ class _DetailSheetState extends State<DetailSheet>
     });
   }
 
-  String _getOpenStatusText(Toilet toilet) {
-    if (!toilet.isOpen) {
-      return "Closed";
-    }
-    final hour = DateTime.now().hour;
-    if (hour >= 20) {
-      return "Open · closes at 10 PM";
-    }
-    return "Open";
-  }
-
   Future<void> _handleVote(bool isUpvote) async {
     if (!widget.isSignedIn || widget.userId == null) {
       widget.onSignInRequest();
@@ -212,6 +271,9 @@ class _DetailSheetState extends State<DetailSheet>
     setState(() {
       _isActionProcessing = true;
       _userVote = newVote;
+      // The viewer is signed-in and voting; from here the local counters
+      // reflect at least their own vote, so a real number is honest to show.
+      _voteAggOk = true;
       if (newVote == null) {
         if (prevVote == true) {
           widget.toilet.upvoteCount = (widget.toilet.upvoteCount - 1).clamp(
@@ -279,8 +341,12 @@ class _DetailSheetState extends State<DetailSheet>
   }
 
   void _shareToilet() {
+    final rs = _ratingSummary;
+    final String starLine = (rs != null && rs.count > 0)
+        ? "\n⭐ ${rs.average.toStringAsFixed(1)} (${rs.count} rating${rs.count == 1 ? '' : 's'})"
+        : "";
     Share.share(
-      "📍 ${widget.toilet.name.replaceAll('\n', ' ')}\n⭐ ${widget.toilet.starRating.toStringAsFixed(1)} Stars\n🚶 ${widget.toilet.address}\n\nView and navigate on ShauchMap.",
+      "📍 ${widget.toilet.name.replaceAll('\n', ' ')}$starLine\n🚶 ${widget.toilet.address}\n\nView and navigate on ShauchMap.",
     );
   }
 
@@ -342,7 +408,7 @@ class _DetailSheetState extends State<DetailSheet>
         userId: widget.userId!,
         userName: widget.userName ?? '',
       ),
-    );
+    ).then((_) => _loadAggregates());
   }
 
   void _openRatingSheet() {
@@ -360,13 +426,16 @@ class _DetailSheetState extends State<DetailSheet>
         userName: widget.userName,
         onSubmitted: widget.onRefreshToilets,
       ),
-    );
+    ).then((_) => _loadAggregates());
   }
 
   @override
   Widget build(BuildContext context) {
-    final openStatus = widget.toilet.isOpen ? SmStatus.open : SmStatus.closed;
-    final openText = _getOpenStatusText(widget.toilet);
+    // Presentation Truth : never trust the imported `is_open` /
+    // `is_free` / amenity booleans as live fact. Live status comes only from
+    // the condition-check StreamBuilder below; here we show "Status
+    // unconfirmed" until that stream says otherwise.
+    final truth = ToiletPresentation.fromToilet(widget.toilet);
 
     return Stack(
       alignment: Alignment.center,
@@ -428,29 +497,63 @@ class _DetailSheetState extends State<DetailSheet>
                         runSpacing: SmTokens.s8,
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
+                          // Classification comes from the identity-truth layer,
+                          // NEVER the raw `category` string (base OSM rows are
+                          // all hard-coded 'govt'). Unknown => "Mapped toilet".
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                Icons.category_outlined,
+                                Icons.place_outlined,
                                 size: 14,
                                 color: context.sm.ink3,
                               ),
                               const SizedBox(width: SmTokens.s4),
                               Text(
-                                widget.toilet.category.toUpperCase(),
+                                truth.contextLabel.toUpperCase(),
                                 style: SmText.caption.copyWith(
                                   color: context.sm.ink2,
                                 ),
                               ),
                             ],
                           ),
+                          if (truth.genderLabel != null)
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.people_outline,
+                                  size: 14,
+                                  color: context.sm.ink3,
+                                ),
+                                const SizedBox(width: SmTokens.s4),
+                                Text(
+                                  truth.genderLabel!.toUpperCase(),
+                                  style: SmText.caption.copyWith(
+                                    color: context.sm.ink2,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          if (truth.isCandidate)
+                            SmFilterChip(
+                              label: 'Unconfirmed location',
+                              icon: Icons.help_outline,
+                              selected: false,
+                              onTap: () {},
+                            ),
                           SmFilterChip(
-                            label: widget.toilet.isFree ? "Free" : "Paid",
+                            label: truth.feeLabel,
                             selected: false,
                             onTap: () {},
                           ),
-                          SmStatusLabel(openStatus, text: openText),
+                          // Imported `is_open` is an importer default, not an
+                          // observation — the live status card below is the
+                          // only place a real Open/Closed is shown.
+                          SmStatusLabel(
+                            SmStatus.unsure,
+                            text: 'Status unconfirmed',
+                          ),
                         ],
                       ),
 
@@ -479,36 +582,134 @@ class _DetailSheetState extends State<DetailSheet>
 
                       const SizedBox(height: SmTokens.s20),
 
-                      // 6. Trust card
-                      SmCard(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
+                      // 6. Condition card — honest, read-time. Says only what
+                      // the recent condition checks actually support; "no
+                      // recent checks" is stated plainly, never a fake score.
+                      StreamBuilder<Map<String, dynamic>>(
+                        stream: _firestoreService.getConditionSummary(
+                          widget.toilet.id,
+                        ),
+                        builder: (context, snap) {
+                          final c = context.sm;
+                          final data = snap.data;
+                          final DateTime now = DateTime.now();
+                          // The LIVE direct query is the high-fidelity source
+                          // for the ONE open toilet (it reads the full
+                          // one-doc-per-account collection, no limit). If it
+                          // fails, fall back to a CURRENT server-derived
+                          // Evidence V2 summary — never to "zero".
+                          final bool rawFailed =
+                              snap.hasError ||
+                              snap.connectionState == ConnectionState.none;
+
+                          int count;
+                          String usable;
+                          String open;
+                          int minutesAgo;
+                          bool unavailable = false;
+                          bool fromIndex = false;
+                          bool expired = false;
+
+                          if (!rawFailed) {
+                            count = (data?['count'] as int?) ?? 0;
+                            usable = (data?['usable'] as String?) ?? 'unknown';
+                            open = (data?['open'] as String?) ?? 'unknown';
+                            minutesAgo = (data?['minutesAgo'] as int?) ?? 0;
+                            final int? vum = data?['validUntilMs'] as int?;
+                            // Schedule one rebuild at the window's edge.
+                            _scheduleConditionExpiry(count > 0 ? vum : null);
+                            // PASSIVE EXPIRY: if wall-clock has passed the
+                            // conservative window with no fresh snapshot, drop
+                            // the verdict to UNKNOWN.
+                            if (count > 0 &&
+                                vum != null &&
+                                now.millisecondsSinceEpoch >= vum) {
+                              expired = true;
+                              usable = 'unknown';
+                              open = 'unknown';
+                            }
+                          } else {
+                            _scheduleConditionExpiry(null);
+                            final ce = widget.toilet.evidence.condition;
+                            if (ce.isCurrentlyValid(now)) {
+                              fromIndex = true;
+                              count = ce.contributorCount;
+                              usable = ce.usable.name; // yes | no | unknown
+                              open = ce.open.name;
+                              minutesAgo = ce.ageMinutes(now) ?? 0;
+                            } else {
+                              unavailable = true;
+                              count = 0;
+                              usable = 'unknown';
+                              open = 'unknown';
+                              minutesAgo = 0;
+                            }
+                          }
+
+                          IconData icon;
+                          Color color;
+                          String title;
+                          if (unavailable) {
+                            icon = Icons.cloud_off_outlined;
+                            color = c.ink3;
+                            title = 'Condition status unavailable';
+                          } else if (expired) {
+                            icon = Icons.hourglass_empty;
+                            color = c.ink3;
+                            title = 'Condition unconfirmed';
+                          } else if (count == 0) {
+                            icon = Icons.help_outline;
+                            color = c.ink3;
+                            title = 'Condition unconfirmed';
+                          } else if (usable == 'no' || open == 'no') {
+                            icon = Icons.error_outline;
+                            color = c.statusClosed;
+                            title = 'Recent checks: not usable';
+                          } else if (usable == 'yes') {
+                            icon = Icons.check_circle_outline;
+                            color = c.statusOpen;
+                            title = 'Recent checks: usable';
+                          } else {
+                            icon = Icons.help_outline;
+                            color = c.statusUnsure;
+                            title = 'Mixed / unconfirmed';
+                          }
+
+                          final String sub = unavailable
+                              ? 'Could not reach the condition history. This is not the same as "no checks".'
+                              : expired
+                              ? 'The last condition checks have aged past the 1-hour window. Tap "Condition check" to refresh.'
+                              : count == 0
+                              ? 'No condition checks in the last hour. Tap "Condition check" to add one.'
+                              : fromIndex
+                              ? 'From recent condition checks (server index) · $count contributor${count == 1 ? '' : 's'} · $minutesAgo min ago'
+                              : '$count check${count == 1 ? '' : 's'} in the last hour · last $minutesAgo min ago';
+
+                          return SmCard(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Icon(
-                                  Icons.check_circle_outline,
-                                  color: context.sm.statusOpen,
-                                  size: 18,
+                                Row(
+                                  children: [
+                                    Icon(icon, color: color, size: 18),
+                                    const SizedBox(width: SmTokens.s8),
+                                    Text(
+                                      title,
+                                      style: SmText.bodyStrong.copyWith(
+                                        color: color,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(width: SmTokens.s8),
+                                const SizedBox(height: SmTokens.s4),
                                 Text(
-                                  'Usable right now',
-                                  style: SmText.bodyStrong.copyWith(
-                                    color: context.sm.statusOpen,
-                                  ),
+                                  sub,
+                                  style: SmText.caption.copyWith(color: c.ink2),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: SmTokens.s4),
-                            Text(
-                              '${widget.toilet.communityScore > 0 ? "${(widget.toilet.communityScore * 100).round()}% people confirmed" : "Not yet verified"} · checked recently',
-                              style: SmText.caption.copyWith(
-                                color: context.sm.ink2,
-                              ),
-                            ),
-                          ],
-                        ),
+                          );
+                        },
                       ),
 
                       const SizedBox(height: SmTokens.s20),
@@ -703,7 +904,7 @@ class _DetailSheetState extends State<DetailSheet>
                                                     reason,
                                                   );
                                               showAppSnackBar(
-                                                "Thanks for reporting. We'll review this shortly.",
+                                                "Thanks. Your report was recorded.",
                                               );
                                             } catch (_) {
                                               showAppSnackBar(
@@ -731,102 +932,122 @@ class _DetailSheetState extends State<DetailSheet>
 
                       const SizedBox(height: SmTokens.s20),
 
-                      // 8. Amenities section
+                      // 8. Amenities section — Presentation Truth .
+                      // Legacy/imported data cannot distinguish "source said
+                      // no" from "source did not say", so a stored `false` is
+                      // shown as "Unknown", never a confident "No". A stored
+                      // `true` is "Listed" (source-reported), not "verified
+                      // now".
                       SmEyebrow('What\'s inside'),
                       const SizedBox(height: SmTokens.s8),
-                      SmCard(
-                        padding: EdgeInsets.zero,
-                        child: Column(
-                          children: [
-                            SmAmenityValue(
-                              label: 'Water',
-                              icon: Icons.water_drop_outlined,
-                              value: widget.toilet.hasWater,
+                      Builder(
+                        builder: (context) {
+                          String amenity(AmenityEvidence e) => switch (e) {
+                            AmenityEvidence.listed => 'Listed',
+                            AmenityEvidence.notPresent => 'Not present',
+                            AmenityEvidence.unknown => 'Unknown',
+                          };
+                          Widget div() =>
+                              Divider(color: context.sm.surface, height: 1);
+                          return SmCard(
+                            padding: EdgeInsets.zero,
+                            child: Column(
+                              children: [
+                                SmAmenityValue(
+                                  label: 'Water facility',
+                                  icon: Icons.water_drop_outlined,
+                                  value: null,
+                                  valueText: amenity(truth.water),
+                                ),
+                                div(),
+                                SmAmenityValue(
+                                  label: 'Soap',
+                                  icon: Icons.soap_outlined,
+                                  value: null,
+                                  valueText: amenity(truth.soap),
+                                ),
+                                div(),
+                                SmAmenityValue(
+                                  label: 'Door / lock',
+                                  icon: Icons.lock_outlined,
+                                  value: null,
+                                  valueText: amenity(truth.lock),
+                                ),
+                                div(),
+                                SmAmenityValue(
+                                  label: 'Western seat',
+                                  icon: Icons.event_seat_outlined,
+                                  value: null,
+                                  valueText: amenity(truth.western),
+                                ),
+                                div(),
+                                SmAmenityValue(
+                                  label: 'Wheelchair access',
+                                  icon: Icons.accessible_outlined,
+                                  value: null,
+                                  valueText: amenity(truth.wheelchair),
+                                ),
+                                div(),
+                                SmAmenityValue(
+                                  label: 'Baby changing',
+                                  icon: Icons.baby_changing_station,
+                                  value: null,
+                                  valueText: amenity(truth.babyChange),
+                                ),
+                                div(),
+                                SmAmenityValue(
+                                  label: 'Sanitary disposal',
+                                  icon: Icons.delete_outline,
+                                  value: null,
+                                  valueText: amenity(truth.sanitaryDisposal),
+                                ),
+                              ],
                             ),
-                            Divider(color: context.sm.surface, height: 1),
-                            SmAmenityValue(
-                              label: 'Soap',
-                              icon: Icons.soap_outlined,
-                              value: widget.toilet.hasSoap,
-                            ),
-                            Divider(color: context.sm.surface, height: 1),
-                            SmAmenityValue(
-                              label: 'Lock works',
-                              icon: Icons.lock_outlined,
-                              value: widget.toilet.hasLock,
-                            ),
-                            Divider(color: context.sm.surface, height: 1),
-                            SmAmenityValue(
-                              label: 'Wheelchair',
-                              icon: Icons.accessible_outlined,
-                              value: widget.toilet.isWheelchair,
-                            ),
-                            Divider(color: context.sm.surface, height: 1),
-                            SmAmenityValue(
-                              label: 'Baby changing',
-                              icon: Icons.baby_changing_station,
-                              value: widget.toilet.hasBabyChange,
-                            ),
-                          ],
-                        ),
+                          );
+                        },
                       ),
 
                       const SizedBox(height: SmTokens.s20),
 
-                      // 9. Women-safe
-                      if (widget.toilet.isWomenSafe) ...[
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: SmTokens.s12,
-                              vertical: SmTokens.s4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: context.sm.womenSafe.withValues(
-                                alpha: 0.15,
-                              ),
-                              borderRadius: BorderRadius.circular(16.0),
-                              border: Border.all(
-                                color: context.sm.womenSafe,
-                                width: 1.0,
-                              ),
-                            ),
-                            child: Text(
-                              "Women Safe — verified recently",
-                              style: SmText.caption.copyWith(
-                                color: context.sm.womenSafe,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: SmTokens.s20),
-                      ],
-
-                      // Live Status
+                      // Live Status — tri-state condition checks in the last
+                      // hour. 'unknown' is shown honestly as "Not sure"; a
+                      // single old check never asserts a status.
                       SmEyebrow('Live Status'),
                       const SizedBox(height: SmTokens.s8),
-                      StreamBuilder<List<Map<String, dynamic>>>(
-                        stream: _firestoreService.getRecentQuickChecks(
+                      StreamBuilder<Map<String, dynamic>>(
+                        stream: _firestoreService.getConditionSummary(
                           widget.toilet.id,
                         ),
                         builder: (context, snapshot) {
-                          if (!snapshot.hasData) {
-                            return const SizedBox.shrink();
+                          final data = snapshot.data;
+                          final bool unavailable =
+                              snapshot.hasError ||
+                              snapshot.connectionState == ConnectionState.none;
+                          final int count = (data?['count'] as int?) ?? 0;
+                          if (unavailable) {
+                            return SmCard(
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.cloud_off_outlined,
+                                    color: context.sm.ink3,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: SmTokens.s8),
+                                  Expanded(
+                                    child: Text(
+                                      "Condition history unavailable — not the "
+                                      "same as no checks.",
+                                      style: SmText.body.copyWith(
+                                        color: context.sm.ink2,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
                           }
-                          final checks = snapshot.data ?? [];
-                          bool hasRecent = false;
-                          if (checks.isNotEmpty) {
-                            final ts = checks.first['timestamp'];
-                            if (ts != null) {
-                              hasRecent =
-                                  DateTime.now()
-                                      .difference((ts as Timestamp).toDate())
-                                      .inHours <
-                                  24;
-                            }
-                          }
-                          if (!hasRecent) {
+                          if (count == 0) {
                             return SmCard(
                               onTap: _openQuickCheckSheet,
                               child: Row(
@@ -839,7 +1060,7 @@ class _DetailSheetState extends State<DetailSheet>
                                   const SizedBox(width: SmTokens.s8),
                                   Expanded(
                                     child: Text(
-                                      "Status unknown today.",
+                                      "No recent condition checks.",
                                       style: SmText.body.copyWith(
                                         color: context.sm.ink2,
                                       ),
@@ -855,31 +1076,26 @@ class _DetailSheetState extends State<DetailSheet>
                               ),
                             );
                           }
-                          final check = checks.first;
-                          final bool water =
-                              check['has_water'] as bool? ?? false;
-                          final bool lock =
-                              check['door_locks'] as bool? ?? false;
-                          final bool safe =
-                              check['safe_approach'] as bool? ?? false;
+                          bool? tri(String? v) =>
+                              v == 'yes' ? true : (v == 'no' ? false : null);
                           return SmCard(
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
                                 SmAmenityValue(
+                                  label: 'Open',
+                                  icon: Icons.door_front_door_outlined,
+                                  value: tri(data?['open'] as String?),
+                                ),
+                                SmAmenityValue(
                                   label: 'Water',
                                   icon: Icons.water_drop_outlined,
-                                  value: water,
+                                  value: tri(data?['water'] as String?),
                                 ),
                                 SmAmenityValue(
-                                  label: 'Lock',
-                                  icon: Icons.lock_outlined,
-                                  value: lock,
-                                ),
-                                SmAmenityValue(
-                                  label: 'Safe',
-                                  icon: Icons.health_and_safety_outlined,
-                                  value: safe,
+                                  label: 'Usable',
+                                  icon: Icons.check_circle_outline,
+                                  value: tri(data?['usable'] as String?),
                                 ),
                               ],
                             ),
@@ -936,9 +1152,13 @@ class _DetailSheetState extends State<DetailSheet>
                                       children: [
                                         Row(
                                           children: [
+                                            // 2026-09-02: reviews are never
+                                            // labelled with the author's Google
+                                            // display name. (The rating doc id
+                                            // is still account-derived — this
+                                            // is not full anonymisation.)
                                             Text(
-                                              rating['user_name'] ??
-                                                  'Anonymous',
+                                              'Community review',
                                               style: SmText.bodyStrong.copyWith(
                                                 color: context.sm.ink,
                                               ),

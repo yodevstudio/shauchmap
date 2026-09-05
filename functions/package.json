@@ -1,0 +1,27 @@
+{
+  "name": "shauchmap-functions",
+  "description": "ShauchMap server-derived evidence (Evidence V2) — trusted Cloud Functions triggers.",
+  "private": true,
+  "type": "commonjs",
+  "engines": {
+    "node": "22"
+  },
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "tsc",
+    "lint": "tsc --noEmit",
+    "test": "npm run build && node --test test/derive.test.mjs",
+    "test:emulator": "npm run build && npx firebase-tools emulators:exec --only firestore,functions --project demo-shauchmap \"node test/integration.mjs\"",
+    "serve": "npm run build && npx firebase-tools emulators:start --only firestore,functions"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.0.2",
+    "firebase-functions": "^6.3.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "firebase": "^11.0.0",
+    "firebase-tools": "15.29.0",
+    "@firebase/rules-unit-testing": "^4.0.1"
+  }
+}

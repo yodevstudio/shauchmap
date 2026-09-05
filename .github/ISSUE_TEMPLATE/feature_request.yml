@@ -23,13 +23,23 @@ body:
     attributes:
       label: Alternatives you considered
   - type: dropdown
+    id: surface
+    attributes:
+      label: Which surface?
+      options:
+        - Android
+        - Instant (web)
+        - Both / not surface-specific
+    validations:
+      required: true
+  - type: dropdown
     id: area
     attributes:
       label: Which part of the app?
       options:
         - Map / GO
         - Browse / Search
-        - Add a toilet
+        - Facility data / contributions
         - Scout system / Profile
         - Data quality
         - Other

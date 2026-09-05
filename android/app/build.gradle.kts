@@ -8,11 +8,29 @@ if (keystorePropertiesFile.exists()) {
 }
 
 // Resolve a signing value: key.properties first, then CI env vars, then null.
+// Blank / whitespace-only values are treated as ABSENT (so an empty CI env var
+// like STORE_FILE="" does not masquerade as a configured keystore).
 fun signingVal(propKey: String, envKey: String): String? =
-    keystoreProperties.getProperty(propKey) ?: System.getenv(envKey)
+    (keystoreProperties.getProperty(propKey) ?: System.getenv(envKey))
+        ?.trim()?.ifEmpty { null }
 
 val hasKeystore = signingVal("storeFile", "STORE_FILE") != null &&
     signingVal("keyAlias", "KEY_ALIAS") != null
+
+// Google Maps SDK key: a real key cannot be dart-define-injected the way
+// other runtime config is — the native Maps SDK reads it from a manifest
+// meta-data value at install time, so it has to be resolved here and injected
+// as a manifest placeholder instead of ever being a literal in AndroidManifest.xml.
+// Resolution order: MAPS_API_KEY env var (CI), then local.properties (each
+// developer's own, git-ignored, per-checkout key) — never a repo default.
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.inputStream().use { localProperties.load(it) }
+}
+val mapsApiKey: String? = (System.getenv("MAPS_API_KEY") ?: localProperties.getProperty("MAPS_API_KEY"))
+    ?.trim()?.ifEmpty { null }
+val hasMapsApiKey = mapsApiKey != null
 
 plugins {
     id("com.android.application")
@@ -51,12 +69,21 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true
+        // Debug builds and CI checks that never exercise live Maps rendering
+        // get a harmless placeholder so they still compile without a real
+        // key; a release build is blocked below if this is still the default.
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey ?: "MISSING_MAPS_API_KEY"
     }
 
     buildTypes {
         release {
-            signingConfig = if (hasKeystore) signingConfigs.getByName("release")
-                            else signingConfigs.getByName("debug")
+            // FAIL CLOSED: never fall back to the debug certificate for a
+            // release artifact. If the release keystore material is present we
+            // use it; if not, we leave this null and the task-graph guard
+            // below aborts any actual release assemble/bundle. (Previously this
+            // silently used signingConfigs["debug"], so `flutter build apk
+            // --release` with no key.properties produced a DEBUG-signed APK.)
+            signingConfig = if (hasKeystore) signingConfigs.getByName("release") else null
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -64,6 +91,36 @@ android {
                 "proguard-rules.pro"
             )
         }
+    }
+}
+
+// A real release build MUST be release-signed. If the release keystore is not
+// configured (no key.properties and no STORE_FILE/KEY_ALIAS env), fail any
+// build that assembles or bundles a release artifact — rather than emitting an
+// APK/AAB signed with the debug certificate. Debug builds and Gradle sync are
+// unaffected (they schedule no *Release assemble/bundle task).
+gradle.taskGraph.whenReady {
+    val assemblingRelease = allTasks.any { t ->
+        val n = t.name
+        n.contains("Release") &&
+            (n.startsWith("assemble") || n.startsWith("bundle") || n.startsWith("package"))
+    }
+    if (assemblingRelease && !hasKeystore) {
+        throw GradleException(
+            "Release signing is not configured. `key.properties` (keyAlias + storeFile) " +
+            "or the STORE_FILE/KEY_ALIAS environment variables are required for a release " +
+            "build. A --release build must NOT fall back to the debug certificate. " +
+            "Provide the release keystore material, or build with --debug."
+        )
+    }
+    if (assemblingRelease && !hasMapsApiKey) {
+        throw GradleException(
+            "No Google Maps SDK key is configured. Set MAPS_API_KEY in " +
+            "android/local.properties (git-ignored) or as an environment variable. " +
+            "A --release build must NOT ship with the MISSING_MAPS_API_KEY placeholder — " +
+            "the map screen would be blank/broken for every user. Provide your own " +
+            "restricted key (package name + release-signing SHA-1), or build with --debug."
+        )
     }
 }
 

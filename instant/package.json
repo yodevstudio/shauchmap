@@ -1,0 +1,44 @@
+{
+  "name": "shauchmap-instant",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "ShauchMap Instant — a zero-install, read-only web surface running the same shared Truth/Evidence/GO decision core as the Android app.",
+  "scripts": {
+    "build:core": "node scripts/build-core.mjs",
+    "predev": "node scripts/build-core.mjs",
+    "prebuild": "node scripts/build-core.mjs",
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "build:fixture": "node scripts/build-fixture.mjs",
+    "build:firebase": "node scripts/validate-firebase-env.mjs && node scripts/build-core.mjs && tsc --noEmit && vite build",
+    "validate:firebase-env": "node scripts/validate-firebase-env.mjs",
+    "preview": "vite preview --port 4174 --strictPort",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --ext .ts,.tsx",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "oracle": "node scripts/run-oracle.mjs",
+    "offline-check": "node scripts/offline-check.mjs",
+    "gen-icons": "node scripts/gen-icons.mjs",
+    "measure": "node scripts/measure.mjs"
+  },
+  "dependencies": {
+    "firebase": "^11.1.0",
+    "geofire-common": "^6.0.0",
+    "preact": "^10.25.1",
+    "preact-iso": "^2.9.1"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.9.4",
+    "@typescript-eslint/eslint-plugin": "^8.18.0",
+    "@typescript-eslint/parser": "^8.18.0",
+    "eslint": "^8.57.1",
+    "jsdom": "^25.0.1",
+    "playwright": "^1.49.1",
+    "typescript": "^5.7.2",
+    "vite": "^5.4.11",
+    "vite-plugin-pwa": "^0.21.1",
+    "vitest": "^2.1.8"
+  }
+}

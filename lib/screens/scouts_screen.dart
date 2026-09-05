@@ -35,8 +35,16 @@ class ScoutsScreen extends StatelessWidget {
           Divider(color: c.soft, height: 1.0),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
+              // read the world-readable `public_profiles` projection
+              // ({name, photo_url, scout_points, updated_at}), NOT the private
+              // owner-only `users` collection (which the hardened rules deny to
+              // a cross-account list query). Rows are mirrored on sign-in and on
+              // every scout-point award. `scout_points` is client-authored /
+              // self-reported COSMETIC gamification — it is NOT trusted
+              // sanitation evidence and never influences GO / reliability /
+              // operational evidence / identity authority.
               stream: FirebaseFirestore.instance
-                  .collection('users')
+                  .collection('public_profiles')
                   .orderBy('scout_points', descending: true)
                   .limit(50)
                   .snapshots(),
@@ -60,7 +68,7 @@ class ScoutsScreen extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.all(SmTokens.s32),
                       child: Text(
-                        "No scouts yet. Be the first to add a toilet.",
+                        "No scouts yet. Ratings and condition checks earn points.",
                         textAlign: TextAlign.center,
                         style: SmText.body.copyWith(color: c.ink2),
                       ),

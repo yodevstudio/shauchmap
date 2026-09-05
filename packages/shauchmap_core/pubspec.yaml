@@ -1,0 +1,14 @@
+name: shauchmap_core
+description: >-
+  The single authoritative pure-Dart ShauchMap domain core: Truth V2, Evidence
+  V2, GO V2, and their presentation reduction. Consumed by the Android app and,
+  via `dart compile js`, by the ShauchMap Instant web client. No dependency on
+  Flutter, Firebase, cloud_firestore, geolocator, or any platform API — the
+  clients supply thin adapters that convert Firestore documents / platform
+  positions into the plain values this package parses.
+publish_to: none
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+
+dev_dependencies:
+  test: ^1.25.0

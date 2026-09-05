@@ -34,16 +34,22 @@ class _AddToiletWizardState extends State<AddToiletWizard>
     with SingleTickerProviderStateMixin {
   int _addWizardStep =
       1; // 1: Camera, 2: Map Location, 3: Category, 4: Details, 5: Success
-  String _addCategory = "govt";
-  bool _addIsFree = true;
-  String _addGender = "unisex";
-  bool _addHasWater = true;
-  bool _addHasSoap = true;
-  bool _addHasLock = true;
-  bool _addHasWheelchair = false;
-  bool _addHasBabyChange = false;
-  bool _addHasSanitaryDisposal = false;
-  bool _addIsWestern = false;
+
+  // Truth V2: the wizard establishes that a mapped facility EXISTS. It writes
+  // NO fabricated legacy defaults — no `is_open`, and no hidden `category` /
+  // `gender_type`. Identity (context + gender), fee and amenities are all
+  // explicit three-state with UNKNOWN as the real, submittable default, and
+  // are serialised in a native `truth_v2` block.
+  FacilityContext _context = FacilityContext.unknown;
+  GenderAccess _gender = GenderAccess.unknown;
+  FeeState _fee = FeeState.unknown;
+  EvidenceState _water = EvidenceState.unknown;
+  EvidenceState _soap = EvidenceState.unknown;
+  EvidenceState _lock = EvidenceState.unknown;
+  EvidenceState _western = EvidenceState.unknown;
+  EvidenceState _wheelchair = EvidenceState.unknown;
+  EvidenceState _babyChange = EvidenceState.unknown;
+  EvidenceState _sanitaryDisposal = EvidenceState.unknown;
   final TextEditingController _addNameController = TextEditingController();
   final TextEditingController _addLandmarkController = TextEditingController();
   LatLng _selectedAddCoords = const LatLng(
@@ -191,24 +197,38 @@ class _AddToiletWizardState extends State<AddToiletWizard>
     }
   }
 
-  Widget _buildToggleRow(String title, bool val, ValueChanged<bool> onChange) {
+  // Compact three-state row: a label and a segmented Unknown / Yes / No picker.
+  // Unknown is a first-class choice, not an "unset" — the submitter can leave it
+  // or pick it deliberately.
+  Widget _triRow(
+    String title,
+    EvidenceState value,
+    ValueChanged<EvidenceState> onChange,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: SmTokens.s8),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(title, style: SmText.body.copyWith(color: context.sm.ink)),
-          Switch(
-            value: val,
-            onChanged: (newVal) {
-              CustomHapticsService.playAsymmetricChoice(newVal);
-              onChange(newVal);
+          Expanded(
+            child: Text(
+              title,
+              style: SmText.body.copyWith(color: context.sm.ink),
+            ),
+          ),
+          const SizedBox(width: SmTokens.s8),
+          _Segmented<EvidenceState>(
+            value: value,
+            options: const [
+              (EvidenceState.unknown, 'Unknown'),
+              (EvidenceState.present, 'Yes'),
+              (EvidenceState.absent, 'No'),
+            ],
+            onChanged: (v) {
+              CustomHapticsService.playAsymmetricChoice(
+                v == EvidenceState.present,
+              );
+              onChange(v);
             },
-            activeThumbColor: Colors.white,
-            activeTrackColor: context.sm.brandSolid,
-            inactiveThumbColor: Colors.white,
-            inactiveTrackColor: context.sm.soft,
-            trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
           ),
         ],
       ),
@@ -413,88 +433,89 @@ class _AddToiletWizardState extends State<AddToiletWizard>
               ),
               const SizedBox(height: SmTokens.s24),
 
-              SmEyebrow('Where is it?'),
+              SmEyebrow('Toilet setting'),
+              const SizedBox(height: SmTokens.s4),
+              Text(
+                "What kind of place is this? Leave as Unknown if unsure.",
+                style: SmText.caption.copyWith(color: context.sm.ink3),
+              ),
               const SizedBox(height: SmTokens.s8),
               Wrap(
                 spacing: SmTokens.s8,
                 runSpacing: SmTokens.s8,
                 children: [
-                  SmFilterChip(
-                    label: 'Public',
-                    icon: Icons.location_city_outlined,
-                    selected: _addCategory == 'government',
-                    onTap: () => setState(() => _addCategory = 'government'),
-                  ),
-                  SmFilterChip(
-                    label: 'Petrol pump',
-                    icon: Icons.local_gas_station_outlined,
-                    selected: _addCategory == 'fuel',
-                    onTap: () => setState(() => _addCategory = 'fuel'),
-                  ),
-                  SmFilterChip(
-                    label: 'Mall / Shop',
-                    icon: Icons.shopping_bag_outlined,
-                    selected: _addCategory == 'commercial',
-                    onTap: () => setState(() => _addCategory = 'commercial'),
-                  ),
-                  SmFilterChip(
-                    label: 'Station',
-                    icon: Icons.train_outlined,
-                    selected: _addCategory == 'station',
-                    onTap: () => setState(() => _addCategory = 'station'),
-                  ),
+                  for (final (ctx, label, icon) in const [
+                    (FacilityContext.unknown, 'Unknown', Icons.help_outline),
+                    (
+                      FacilityContext.publicToilet,
+                      'Public toilet',
+                      Icons.wc_outlined,
+                    ),
+                    (
+                      FacilityContext.petrolStation,
+                      'Petrol pump',
+                      Icons.local_gas_station_outlined,
+                    ),
+                    (
+                      FacilityContext.commercial,
+                      'Mall / shop',
+                      Icons.shopping_bag_outlined,
+                    ),
+                    (FacilityContext.station, 'Station', Icons.train_outlined),
+                    (FacilityContext.other, 'Other', Icons.more_horiz),
+                  ])
+                    SmFilterChip(
+                      label: label,
+                      icon: icon,
+                      selected: _context == ctx,
+                      onTap: () => setState(() => _context = ctx),
+                    ),
                 ],
               ),
               const SizedBox(height: SmTokens.s24),
 
-              SmEyebrow('Gender'),
+              SmEyebrow('Who is it for?'),
               const SizedBox(height: SmTokens.s8),
-              Row(
+              Wrap(
+                spacing: SmTokens.s8,
+                runSpacing: SmTokens.s8,
                 children: [
-                  SmFilterChip(
-                    label: 'Unisex',
-                    selected: _addGender == 'unisex',
-                    onTap: () => setState(() => _addGender = 'unisex'),
-                  ),
-                  const SizedBox(width: SmTokens.s8),
-                  SmFilterChip(
-                    label: 'Men',
-                    selected: _addGender == 'men',
-                    onTap: () => setState(() => _addGender = 'men'),
-                  ),
-                  const SizedBox(width: SmTokens.s8),
-                  SmFilterChip(
-                    label: 'Women',
-                    selected: _addGender == 'women',
-                    onTap: () => setState(() => _addGender = 'women'),
-                  ),
+                  for (final (g, label) in const [
+                    (GenderAccess.unknown, 'Unknown'),
+                    (GenderAccess.unisex, 'Unisex'),
+                    (GenderAccess.men, 'Men'),
+                    (GenderAccess.women, 'Women'),
+                  ])
+                    SmFilterChip(
+                      label: label,
+                      selected: _gender == g,
+                      onTap: () => setState(() => _gender = g),
+                    ),
                 ],
               ),
               const SizedBox(height: SmTokens.s24),
 
               SmEyebrow('Cost'),
               const SizedBox(height: SmTokens.s8),
-              Row(
-                children: [
-                  SmFilterChip(
-                    label: 'Free',
-                    selected: _addIsFree == true,
-                    onTap: () => setState(() => _addIsFree = true),
-                  ),
-                  const SizedBox(width: SmTokens.s8),
-                  SmFilterChip(
-                    label: 'Pay (₹)',
-                    selected: _addIsFree == false,
-                    onTap: () => setState(() => _addIsFree = false),
-                  ),
+              _Segmented<FeeState>(
+                value: _fee,
+                options: const [
+                  (FeeState.unknown, 'Unknown'),
+                  (FeeState.free, 'Free'),
+                  (FeeState.paid, 'Pay (₹)'),
                 ],
+                onChanged: (v) {
+                  CustomHapticsService.playAsymmetricChoice(v == FeeState.free);
+                  setState(() => _fee = v);
+                },
               ),
               const SizedBox(height: SmTokens.s24),
 
-              SmEyebrow("What's there? (all optional)"),
+              SmEyebrow("What's there?"),
               const SizedBox(height: SmTokens.s4),
               Text(
-                "Skip anything you don't know",
+                "Describe the FACILITY, not its state right now. Leave anything "
+                "you didn't see as Unknown.",
                 style: SmText.caption.copyWith(color: context.sm.ink3),
               ),
               const SizedBox(height: SmTokens.s8),
@@ -502,40 +523,36 @@ class _AddToiletWizardState extends State<AddToiletWizard>
                 padding: const EdgeInsets.all(SmTokens.s16),
                 child: Column(
                   children: [
-                    _buildToggleRow(
-                      "Water Available",
-                      _addHasWater,
-                      (val) => setState(() => _addHasWater = val),
+                    _triRow(
+                      "Water facility",
+                      _water,
+                      (v) => setState(() => _water = v),
                     ),
-                    _buildToggleRow(
-                      "Soap Available",
-                      _addHasSoap,
-                      (val) => setState(() => _addHasSoap = val),
+                    _triRow("Soap", _soap, (v) => setState(() => _soap = v)),
+                    _triRow(
+                      "Door / lock",
+                      _lock,
+                      (v) => setState(() => _lock = v),
                     ),
-                    _buildToggleRow(
-                      "Lock Working",
-                      _addHasLock,
-                      (val) => setState(() => _addHasLock = val),
+                    _triRow(
+                      "Western seat",
+                      _western,
+                      (v) => setState(() => _western = v),
                     ),
-                    _buildToggleRow(
-                      "Western Style (seated)",
-                      _addIsWestern,
-                      (val) => setState(() => _addIsWestern = val),
+                    _triRow(
+                      "Wheelchair access",
+                      _wheelchair,
+                      (v) => setState(() => _wheelchair = v),
                     ),
-                    _buildToggleRow(
-                      "Wheelchair Accessible",
-                      _addHasWheelchair,
-                      (val) => setState(() => _addHasWheelchair = val),
+                    _triRow(
+                      "Baby changing",
+                      _babyChange,
+                      (v) => setState(() => _babyChange = v),
                     ),
-                    _buildToggleRow(
-                      "Baby Changing Station",
-                      _addHasBabyChange,
-                      (val) => setState(() => _addHasBabyChange = val),
-                    ),
-                    _buildToggleRow(
-                      "Sanitary Disposal",
-                      _addHasSanitaryDisposal,
-                      (val) => setState(() => _addHasSanitaryDisposal = val),
+                    _triRow(
+                      "Sanitary disposal",
+                      _sanitaryDisposal,
+                      (v) => setState(() => _sanitaryDisposal = v),
                     ),
                   ],
                 ),
@@ -607,27 +624,42 @@ class _AddToiletWizardState extends State<AddToiletWizard>
                     /* keep coordinate fallback */
                   }
 
+                  // Truth V2 submission. NO fabricated legacy defaults:
+                  //  - `is_open` is NOT written — "open right now" is a
+                  //    condition observation, not a facility fact.
+                  //  - NO top-level `category` / `gender_type` — identity
+                  //    (context + gender) lives in `truth_v2` with an explicit
+                  //    "unknown", so `Toilet.fromFirestore`'s compatibility
+                  //    default ('govt' / 'unisex') can never become truth.
+                  //  - fee + amenities are the explicit `truth_v2` block, with
+                  //    UNKNOWN serialised as "unknown" (never by omission).
+                  //  - No `star_rating` / `total_ratings` mirror.
                   final Map<String, dynamic> data = {
                     'name': name,
                     'address': resolvedAddress,
                     'latitude': _selectedAddCoords.latitude,
                     'longitude': _selectedAddCoords.longitude,
-                    'category': _addCategory,
-                    'star_rating': 0.0,
-                    'total_ratings': 0,
-                    'is_open': true,
-                    'is_free': _addIsFree,
-                    'is_western': _addIsWestern,
-                    'gender_type': _addGender,
-                    'has_water': _addHasWater,
-                    'has_soap': _addHasSoap,
-                    'has_lock': _addHasLock,
-                    'is_wheelchair': _addHasWheelchair,
-                    'has_baby_change': _addHasBabyChange,
-                    'has_sanitary_disposal': _addHasSanitaryDisposal,
                     'landmark': _addLandmarkController.text.trim(),
                     'added_by': widget.userId,
                     'created_at': FieldValue.serverTimestamp(),
+                    // The pure `truth_v2` fields come from
+                    // shauchmap_core; the `recorded_at` server sentinel is added
+                    // by the Android write adapter. Byte-identical to the
+                    // legacy in-app `ToiletTruth.newSubmission(...)` output.
+                    'truth_v2': truthV2SubmissionMap(
+                      fee: _fee,
+                      context: _context,
+                      gender: _gender,
+                      amenities: ToiletAmenities(
+                        water: _water,
+                        soap: _soap,
+                        lock: _lock,
+                        western: _western,
+                        wheelchair: _wheelchair,
+                        babyChange: _babyChange,
+                        sanitaryDisposal: _sanitaryDisposal,
+                      ),
+                    ),
                   };
 
                   try {
@@ -801,6 +833,67 @@ class _AddToiletWizardState extends State<AddToiletWizard>
               ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// A compact segmented picker used for Truth V2 three-state inputs (fee,
+/// amenities). Every option shows a WORD, not colour alone (HARD_RULES #10).
+class _Segmented<T> extends StatelessWidget {
+  final T value;
+  final List<(T, String)> options;
+  final ValueChanged<T> onChanged;
+
+  const _Segmented({
+    required this.value,
+    required this.options,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.sm;
+    return Container(
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(SmTokens.rPill),
+        border: Border.all(color: c.line, width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final (opt, label) in options)
+            GestureDetector(
+              onTap: () => onChanged(opt),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 120),
+                constraints: const BoxConstraints(minHeight: 40, minWidth: 52),
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: SmTokens.s12,
+                  vertical: SmTokens.s8,
+                ),
+                decoration: BoxDecoration(
+                  color: value == opt
+                      ? c.brandSolid.withValues(alpha: 0.12)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(SmTokens.rPill),
+                  border: Border.all(
+                    color: value == opt ? c.brandSolid : Colors.transparent,
+                    width: 1.5,
+                  ),
+                ),
+                child: Text(
+                  label,
+                  style: SmText.caption.copyWith(
+                    color: value == opt ? c.brand : c.ink2,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

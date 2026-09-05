@@ -1,0 +1,3313 @@
+{
+ "_README": "Canonical deterministic conformance corpus. Inputs are hand-authored; expected outputs are generated from the authoritative native Dart core (oracle/gen_oracle_test.dart) and verified against the compiled-JS core. Timestamps use the sentinel {\"__ts__\": <epoch_ms>} so both adapters convert identically; a raw string/number in a timestamp slot is a deliberate malformed-input case and is passed through untouched.",
+ "_nowMs": 1788393600000,
+ "_comment_now": "1788393600000 == 2026-09-02T12:00:00Z \u2014 the same kNow the Dart test suites use.",
+ "truth": [
+  {
+   "name": "T01 OSM sourceMapped, no tags",
+   "addedBy": "osm_india_import_2026",
+   "map": {
+    "added_by": "osm_india_import_2026",
+    "category": "govt",
+    "gender_type": "unisex",
+    "is_open": true,
+    "is_free": true,
+    "has_water": false,
+    "has_soap": false,
+    "has_lock": false
+   }
+  },
+  {
+   "name": "T02 OSM sourceMapped, explicit female + wheelchair + water tags",
+   "addedBy": "osm_india_import_2026",
+   "map": {
+    "added_by": "osm_india_import_2026",
+    "category": "govt",
+    "gender_type": "female",
+    "is_wheelchair": true,
+    "has_water": true,
+    "has_baby_change": true
+   }
+  },
+  {
+   "name": "T03 OSM inferred candidate (needs_confirm) \u2014 positives downgraded",
+   "addedBy": "osm_extended_2026",
+   "map": {
+    "added_by": "osm_extended_2026",
+    "needs_confirm": true,
+    "category": "petrol",
+    "gender_type": "male",
+    "has_water": true,
+    "is_wheelchair": true
+   }
+  },
+  {
+   "name": "T04 legacy community wizard (added_by present, not osm_)",
+   "addedBy": "user_abc",
+   "map": {
+    "added_by": "user_abc",
+    "created_at": {
+     "__ts__": 1749133523664
+    },
+    "category": "government",
+    "gender_type": "men",
+    "is_western": true,
+    "has_sanitary_disposal": true,
+    "is_open": true
+   }
+  },
+  {
+   "name": "T05 unknown provenance (empty added_by)",
+   "addedBy": "",
+   "map": {
+    "added_by": "",
+    "category": "govt",
+    "gender_type": "unisex"
+   }
+  },
+  {
+   "name": "T06 native truth_v2 \u2014 fully valid",
+   "addedBy": "user_xyz",
+   "map": {
+    "added_by": "user_xyz",
+    "truth_v2": {
+     "version": 2,
+     "source_type": "community_submission",
+     "recorded_at": {
+      "__ts__": 1788300000000
+     },
+     "fee": "paid",
+     "context": "petrol_station",
+     "gender": "women",
+     "amenities": {
+      "water": "present",
+      "soap": "absent",
+      "lock": "present",
+      "western": "unknown",
+      "wheelchair": "absent",
+      "baby_change": "unknown",
+      "sanitary_disposal": "present"
+     }
+    }
+   }
+  },
+  {
+   "name": "T07 native truth_v2 \u2014 MALFORMED (missing 'gender' key) -> falls back to legacy community adapter",
+   "addedBy": "user_xyz",
+   "map": {
+    "added_by": "user_xyz",
+    "truth_v2": {
+     "version": 2,
+     "source_type": "community_submission",
+     "recorded_at": {
+      "__ts__": 1788300000000
+     },
+     "fee": "paid",
+     "context": "petrol_station",
+     "amenities": {
+      "water": "present",
+      "soap": "absent",
+      "lock": "present",
+      "western": "unknown",
+      "wheelchair": "absent",
+      "baby_change": "unknown",
+      "sanitary_disposal": "present"
+     }
+    }
+   }
+  },
+  {
+   "name": "T08 native truth_v2 \u2014 MALFORMED (bad amenity enum) -> legacy fallback",
+   "addedBy": "user_xyz",
+   "map": {
+    "added_by": "user_xyz",
+    "truth_v2": {
+     "version": 2,
+     "source_type": "community_submission",
+     "recorded_at": {
+      "__ts__": 1788300000000
+     },
+     "fee": "free",
+     "context": "other",
+     "gender": "unisex",
+     "amenities": {
+      "water": "MAYBE",
+      "soap": "absent",
+      "lock": "present",
+      "western": "unknown",
+      "wheelchair": "absent",
+      "baby_change": "unknown",
+      "sanitary_disposal": "present"
+     }
+    }
+   }
+  },
+  {
+   "name": "T09 native truth_v2 \u2014 MALFORMED (recorded_at not a timestamp) -> legacy fallback",
+   "addedBy": "user_xyz",
+   "map": {
+    "added_by": "user_xyz",
+    "truth_v2": {
+     "version": 2,
+     "source_type": "community_submission",
+     "recorded_at": "2026-09-01",
+     "fee": "free",
+     "context": "other",
+     "gender": "unisex",
+     "amenities": {
+      "water": "present",
+      "soap": "absent",
+      "lock": "present",
+      "western": "unknown",
+      "wheelchair": "absent",
+      "baby_change": "unknown",
+      "sanitary_disposal": "present"
+     }
+    }
+   }
+  },
+  {
+   "name": "T10 OSM, gender absent -> UNKNOWN (not unisex); fee always UNKNOWN",
+   "addedBy": "osm_india_import_2026",
+   "map": {
+    "added_by": "osm_india_import_2026",
+    "is_free": false
+   }
+  }
+ ],
+ "evidence": [
+  {
+   "name": "E01 no evidence_v2 at all",
+   "evidence_v2": null
+  },
+  {
+   "name": "E02 wrong version",
+   "evidence_v2": {
+    "version": 2,
+    "ratings": {
+     "count": 3
+    }
+   }
+  },
+  {
+   "name": "E03 ratings indexed, count 4 avg 3.5",
+   "evidence_v2": {
+    "version": 1,
+    "ratings": {
+     "count": 4,
+     "average": 3.5,
+     "computed_at": {
+      "__ts__": 1788390000000
+     },
+     "last_event_at": {
+      "__ts__": 1788389000000
+     }
+    }
+   }
+  },
+  {
+   "name": "E04 ratings indexed ZERO (count 0, no average)",
+   "evidence_v2": {
+    "version": 1,
+    "ratings": {
+     "count": 0,
+     "computed_at": {
+      "__ts__": 1788390000000
+     },
+     "last_event_at": {
+      "__ts__": 1788389000000
+     }
+    }
+   }
+  },
+  {
+   "name": "E05 ratings MALFORMED (count 0 but has average) -> unavailable",
+   "evidence_v2": {
+    "version": 1,
+    "ratings": {
+     "count": 0,
+     "average": 4.0,
+     "computed_at": {
+      "__ts__": 1788390000000
+     },
+     "last_event_at": {
+      "__ts__": 1788389000000
+     }
+    }
+   }
+  },
+  {
+   "name": "E06 votes indexed up 5 down 2",
+   "evidence_v2": {
+    "version": 1,
+    "votes": {
+     "up": 5,
+     "down": 2,
+     "computed_at": {
+      "__ts__": 1788390000000
+     },
+     "last_event_at": {
+      "__ts__": 1788389000000
+     }
+    }
+   }
+  },
+  {
+   "name": "E07 condition VALID single-clear usable (1 yes 3 unknown), fresh",
+   "evidence_v2": {
+    "version": 1,
+    "condition": {
+     "open": "unknown",
+     "water": "unknown",
+     "usable": "yes",
+     "lock": "unknown",
+     "contributor_count": 4,
+     "latest_at": {
+      "__ts__": 1788393000000
+     },
+     "valid_until": {
+      "__ts__": 1788396600000
+     },
+     "computed_at": {
+      "__ts__": 1788393100000
+     },
+     "last_event_at": {
+      "__ts__": 1788393000000
+     },
+     "support": {
+      "open": {
+       "yes": 0,
+       "no": 0,
+       "unknown": 4
+      },
+      "water": {
+       "yes": 0,
+       "no": 0,
+       "unknown": 4
+      },
+      "usable": {
+       "yes": 1,
+       "no": 0,
+       "unknown": 3
+      },
+      "lock": {
+       "yes": 0,
+       "no": 0,
+       "unknown": 4
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "E08 condition VALID corroborated-clear usable (3 yes 0 no), fresh",
+   "evidence_v2": {
+    "version": 1,
+    "condition": {
+     "open": "yes",
+     "water": "unknown",
+     "usable": "yes",
+     "lock": "unknown",
+     "contributor_count": 3,
+     "latest_at": {
+      "__ts__": 1788393000000
+     },
+     "valid_until": {
+      "__ts__": 1788396600000
+     },
+     "computed_at": {
+      "__ts__": 1788393100000
+     },
+     "last_event_at": {
+      "__ts__": 1788393000000
+     },
+     "support": {
+      "open": {
+       "yes": 3,
+       "no": 0,
+       "unknown": 0
+      },
+      "water": {
+       "yes": 0,
+       "no": 0,
+       "unknown": 3
+      },
+      "usable": {
+       "yes": 3,
+       "no": 0,
+       "unknown": 0
+      },
+      "lock": {
+       "yes": 0,
+       "no": 0,
+       "unknown": 3
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "E09 condition EXPIRED (valid_until in the past) -> isCurrentlyValid false",
+   "evidence_v2": {
+    "version": 1,
+    "condition": {
+     "open": "yes",
+     "water": "unknown",
+     "usable": "yes",
+     "lock": "unknown",
+     "contributor_count": 3,
+     "latest_at": {
+      "__ts__": 1788389000000
+     },
+     "valid_until": {
+      "__ts__": 1788392600000
+     },
+     "computed_at": {
+      "__ts__": 1788389100000
+     },
+     "last_event_at": {
+      "__ts__": 1788389000000
+     },
+     "support": {
+      "open": {
+       "yes": 3,
+       "no": 0,
+       "unknown": 0
+      },
+      "water": {
+       "yes": 0,
+       "no": 0,
+       "unknown": 3
+      },
+      "usable": {
+       "yes": 3,
+       "no": 0,
+       "unknown": 0
+      },
+      "lock": {
+       "yes": 0,
+       "no": 0,
+       "unknown": 3
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "E10 condition MALFORMED (support.usable sums != contributor_count) -> unavailable",
+   "evidence_v2": {
+    "version": 1,
+    "condition": {
+     "open": "unknown",
+     "water": "unknown",
+     "usable": "unknown",
+     "lock": "unknown",
+     "contributor_count": 4,
+     "latest_at": {
+      "__ts__": 1788393000000
+     },
+     "valid_until": {
+      "__ts__": 1788396600000
+     },
+     "computed_at": {
+      "__ts__": 1788393100000
+     },
+     "last_event_at": {
+      "__ts__": 1788393000000
+     },
+     "support": {
+      "open": {
+       "yes": 0,
+       "no": 0,
+       "unknown": 4
+      },
+      "water": {
+       "yes": 0,
+       "no": 0,
+       "unknown": 4
+      },
+      "usable": {
+       "yes": 1,
+       "no": 1,
+       "unknown": 1
+      },
+      "lock": {
+       "yes": 0,
+       "no": 0,
+       "unknown": 4
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "E11 condition MALFORMED (verdict 'yes' contradicts support {yes:1,no:2}) -> unavailable",
+   "evidence_v2": {
+    "version": 1,
+    "condition": {
+     "open": "unknown",
+     "water": "unknown",
+     "usable": "yes",
+     "lock": "unknown",
+     "contributor_count": 3,
+     "latest_at": {
+      "__ts__": 1788393000000
+     },
+     "valid_until": {
+      "__ts__": 1788396600000
+     },
+     "computed_at": {
+      "__ts__": 1788393100000
+     },
+     "last_event_at": {
+      "__ts__": 1788393000000
+     },
+     "support": {
+      "open": {
+       "yes": 0,
+       "no": 0,
+       "unknown": 3
+      },
+      "water": {
+       "yes": 0,
+       "no": 0,
+       "unknown": 3
+      },
+      "usable": {
+       "yes": 1,
+       "no": 2,
+       "unknown": 0
+      },
+      "lock": {
+       "yes": 0,
+       "no": 0,
+       "unknown": 3
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "E12 condition VALID tied usable (2 yes 2 no) -> verdict unknown",
+   "evidence_v2": {
+    "version": 1,
+    "condition": {
+     "open": "unknown",
+     "water": "unknown",
+     "usable": "unknown",
+     "lock": "unknown",
+     "contributor_count": 4,
+     "latest_at": {
+      "__ts__": 1788393000000
+     },
+     "valid_until": {
+      "__ts__": 1788396600000
+     },
+     "computed_at": {
+      "__ts__": 1788393100000
+     },
+     "last_event_at": {
+      "__ts__": 1788393000000
+     },
+     "support": {
+      "open": {
+       "yes": 0,
+       "no": 0,
+       "unknown": 4
+      },
+      "water": {
+       "yes": 0,
+       "no": 0,
+       "unknown": 4
+      },
+      "usable": {
+       "yes": 2,
+       "no": 2,
+       "unknown": 0
+      },
+      "lock": {
+       "yes": 0,
+       "no": 0,
+       "unknown": 4
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "E13 condition VALID conflicted-majority NO usable (1 yes 2 no) + water reported out",
+   "evidence_v2": {
+    "version": 1,
+    "condition": {
+     "open": "unknown",
+     "water": "no",
+     "usable": "no",
+     "lock": "unknown",
+     "contributor_count": 3,
+     "latest_at": {
+      "__ts__": 1788393000000
+     },
+     "valid_until": {
+      "__ts__": 1788396600000
+     },
+     "computed_at": {
+      "__ts__": 1788393100000
+     },
+     "last_event_at": {
+      "__ts__": 1788393000000
+     },
+     "support": {
+      "open": {
+       "yes": 0,
+       "no": 0,
+       "unknown": 3
+      },
+      "water": {
+       "yes": 0,
+       "no": 3,
+       "unknown": 0
+      },
+      "usable": {
+       "yes": 1,
+       "no": 2,
+       "unknown": 0
+      },
+      "lock": {
+       "yes": 0,
+       "no": 0,
+       "unknown": 3
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "E14 condition zero contributors (cc 0, all unknown, no timestamps) -> available but not valid",
+   "evidence_v2": {
+    "version": 1,
+    "condition": {
+     "open": "unknown",
+     "water": "unknown",
+     "usable": "unknown",
+     "lock": "unknown",
+     "contributor_count": 0,
+     "computed_at": {
+      "__ts__": 1788393100000
+     },
+     "last_event_at": {
+      "__ts__": 1788393000000
+     },
+     "support": {
+      "open": {
+       "yes": 0,
+       "no": 0,
+       "unknown": 0
+      },
+      "water": {
+       "yes": 0,
+       "no": 0,
+       "unknown": 0
+      },
+      "usable": {
+       "yes": 0,
+       "no": 0,
+       "unknown": 0
+      },
+      "lock": {
+       "yes": 0,
+       "no": 0,
+       "unknown": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "E15 all three sections present + valid (ratings 4/3.5, votes 5/2, condition corr-usable)",
+   "evidence_v2": {
+    "version": 1,
+    "ratings": {
+     "count": 4,
+     "average": 3.5,
+     "computed_at": {
+      "__ts__": 1788390000000
+     },
+     "last_event_at": {
+      "__ts__": 1788389000000
+     }
+    },
+    "votes": {
+     "up": 5,
+     "down": 2,
+     "computed_at": {
+      "__ts__": 1788390000000
+     },
+     "last_event_at": {
+      "__ts__": 1788389000000
+     }
+    },
+    "condition": {
+     "open": "yes",
+     "water": "unknown",
+     "usable": "yes",
+     "lock": "no",
+     "contributor_count": 2,
+     "latest_at": {
+      "__ts__": 1788393000000
+     },
+     "valid_until": {
+      "__ts__": 1788396600000
+     },
+     "computed_at": {
+      "__ts__": 1788393100000
+     },
+     "last_event_at": {
+      "__ts__": 1788393000000
+     },
+     "support": {
+      "open": {
+       "yes": 2,
+       "no": 0,
+       "unknown": 0
+      },
+      "water": {
+       "yes": 0,
+       "no": 0,
+       "unknown": 2
+      },
+      "usable": {
+       "yes": 2,
+       "no": 0,
+       "unknown": 0
+      },
+      "lock": {
+       "yes": 0,
+       "no": 2,
+       "unknown": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "BND-E1 condition valid_until == now exactly -> EXPIRED (isCurrentlyValid false)",
+   "evidence_v2": {
+    "version": 1,
+    "condition": {
+     "open": "yes",
+     "water": "unknown",
+     "usable": "yes",
+     "lock": "unknown",
+     "contributor_count": 3,
+     "latest_at": {
+      "__ts__": 1788393000000
+     },
+     "valid_until": {
+      "__ts__": 1788393600000
+     },
+     "computed_at": {
+      "__ts__": 1788393100000
+     },
+     "last_event_at": {
+      "__ts__": 1788393000000
+     },
+     "support": {
+      "open": {
+       "yes": 3,
+       "no": 0,
+       "unknown": 0
+      },
+      "water": {
+       "yes": 0,
+       "no": 0,
+       "unknown": 3
+      },
+      "usable": {
+       "yes": 3,
+       "no": 0,
+       "unknown": 0
+      },
+      "lock": {
+       "yes": 0,
+       "no": 0,
+       "unknown": 3
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "BND-E2 condition valid_until == now + 1 ms -> still valid",
+   "evidence_v2": {
+    "version": 1,
+    "condition": {
+     "open": "yes",
+     "water": "unknown",
+     "usable": "yes",
+     "lock": "unknown",
+     "contributor_count": 3,
+     "latest_at": {
+      "__ts__": 1788393000000
+     },
+     "valid_until": {
+      "__ts__": 1788393600001
+     },
+     "computed_at": {
+      "__ts__": 1788393100000
+     },
+     "last_event_at": {
+      "__ts__": 1788393000000
+     },
+     "support": {
+      "open": {
+       "yes": 3,
+       "no": 0,
+       "unknown": 0
+      },
+      "water": {
+       "yes": 0,
+       "no": 0,
+       "unknown": 3
+      },
+      "usable": {
+       "yes": 3,
+       "no": 0,
+       "unknown": 0
+      },
+      "lock": {
+       "yes": 0,
+       "no": 0,
+       "unknown": 3
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "BND-E3 condition latest_at in the FUTURE -> parses; ageMinutes clamps to 0",
+   "evidence_v2": {
+    "version": 1,
+    "condition": {
+     "open": "yes",
+     "water": "unknown",
+     "usable": "yes",
+     "lock": "unknown",
+     "contributor_count": 3,
+     "latest_at": {
+      "__ts__": 1788394200000
+     },
+     "valid_until": {
+      "__ts__": 1788397200000
+     },
+     "computed_at": {
+      "__ts__": 1788393500000
+     },
+     "last_event_at": {
+      "__ts__": 1788394200000
+     },
+     "support": {
+      "open": {
+       "yes": 3,
+       "no": 0,
+       "unknown": 0
+      },
+      "water": {
+       "yes": 0,
+       "no": 0,
+       "unknown": 3
+      },
+      "usable": {
+       "yes": 3,
+       "no": 0,
+       "unknown": 0
+      },
+      "lock": {
+       "yes": 0,
+       "no": 0,
+       "unknown": 3
+      }
+     }
+    }
+   }
+  }
+ ],
+ "go": [
+  {
+   "name": "G01 empty pool -> noToilets",
+   "nowMs": 1788393600000,
+   "pool": []
+  },
+  {
+   "name": "G02 single OSM primary, no evidence -> nearestWithNoStrongEvidence",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "a",
+     "distanceMeters": 120.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "A",
+      "latitude": 26.3,
+      "longitude": 73.1
+     }
+    }
+   ]
+  },
+  {
+   "name": "G03 two OSM primaries; nearer has NO evidence, farther has corr-usable WITHIN detour -> promote (recentCorroboratedUsableWithinDetour)",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "near",
+     "distanceMeters": 100.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "near",
+      "latitude": 26.3,
+      "longitude": 73.1
+     }
+    },
+    {
+     "id": "far",
+     "distanceMeters": 300.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "far",
+      "latitude": 26.31,
+      "longitude": 73.11,
+      "evidence_v2": {
+       "version": 1,
+       "condition": {
+        "open": "yes",
+        "water": "unknown",
+        "usable": "yes",
+        "lock": "unknown",
+        "contributor_count": 3,
+        "latest_at": {
+         "__ts__": 1788393000000
+        },
+        "valid_until": {
+         "__ts__": 1788396600000
+        },
+        "computed_at": {
+         "__ts__": 1788393100000
+        },
+        "last_event_at": {
+         "__ts__": 1788393000000
+        },
+        "support": {
+         "open": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "water": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         },
+         "usable": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "lock": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         }
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "G04 corr-usable farther REJECTED by absolute 400m cap (delta 500m) -> nearestWithNoStrongEvidence",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "near",
+     "distanceMeters": 100.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "near"
+     }
+    },
+    {
+     "id": "far",
+     "distanceMeters": 600.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "far",
+      "evidence_v2": {
+       "version": 1,
+       "condition": {
+        "open": "yes",
+        "water": "unknown",
+        "usable": "yes",
+        "lock": "unknown",
+        "contributor_count": 3,
+        "latest_at": {
+         "__ts__": 1788393000000
+        },
+        "valid_until": {
+         "__ts__": 1788396600000
+        },
+        "computed_at": {
+         "__ts__": 1788393100000
+        },
+        "last_event_at": {
+         "__ts__": 1788393000000
+        },
+        "support": {
+         "open": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "water": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         },
+         "usable": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "lock": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         }
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "G05 corr-usable farther REJECTED by 1.5x ratio (300 -> 500 is within 400 abs but 500 > 450) -> nearest",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "near",
+     "distanceMeters": 300.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "near"
+     }
+    },
+    {
+     "id": "far",
+     "distanceMeters": 500.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "far",
+      "evidence_v2": {
+       "version": 1,
+       "condition": {
+        "open": "yes",
+        "water": "unknown",
+        "usable": "yes",
+        "lock": "unknown",
+        "contributor_count": 3,
+        "latest_at": {
+         "__ts__": 1788393000000
+        },
+        "valid_until": {
+         "__ts__": 1788396600000
+        },
+        "computed_at": {
+         "__ts__": 1788393100000
+        },
+        "last_event_at": {
+         "__ts__": 1788393000000
+        },
+        "support": {
+         "open": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "water": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         },
+         "usable": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "lock": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         }
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "G06 nearest primary corroborated-UNAVAILABLE, an escape within BOTH detour guards (200 -> 250) -> avoidedRecentCorroboratedUnavailable",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "bad",
+     "distanceMeters": 200.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "bad",
+      "evidence_v2": {
+       "version": 1,
+       "condition": {
+        "open": "no",
+        "water": "unknown",
+        "usable": "no",
+        "lock": "unknown",
+        "contributor_count": 3,
+        "latest_at": {
+         "__ts__": 1788393000000
+        },
+        "valid_until": {
+         "__ts__": 1788396600000
+        },
+        "computed_at": {
+         "__ts__": 1788393100000
+        },
+        "last_event_at": {
+         "__ts__": 1788393000000
+        },
+        "support": {
+         "open": {
+          "yes": 0,
+          "no": 3,
+          "unknown": 0
+         },
+         "water": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         },
+         "usable": {
+          "yes": 0,
+          "no": 3,
+          "unknown": 0
+         },
+         "lock": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         }
+        }
+       }
+      }
+     }
+    },
+    {
+     "id": "esc",
+     "distanceMeters": 250.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "esc"
+     }
+    }
+   ]
+  },
+  {
+   "name": "G07 nearest primary corr-UNAVAILABLE, NO escape in detour -> bestMappedOptionCorroboratedUnavailable (requiresConfirmation)",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "bad",
+     "distanceMeters": 100.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "bad",
+      "evidence_v2": {
+       "version": 1,
+       "condition": {
+        "open": "no",
+        "water": "unknown",
+        "usable": "no",
+        "lock": "unknown",
+        "contributor_count": 3,
+        "latest_at": {
+         "__ts__": 1788393000000
+        },
+        "valid_until": {
+         "__ts__": 1788396600000
+        },
+        "computed_at": {
+         "__ts__": 1788393100000
+        },
+        "last_event_at": {
+         "__ts__": 1788393000000
+        },
+        "support": {
+         "open": {
+          "yes": 0,
+          "no": 3,
+          "unknown": 0
+         },
+         "water": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         },
+         "usable": {
+          "yes": 0,
+          "no": 3,
+          "unknown": 0
+         },
+         "lock": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         }
+        }
+       }
+      }
+     }
+    },
+    {
+     "id": "farbad",
+     "distanceMeters": 900.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "farbad"
+     }
+    }
+   ]
+  },
+  {
+   "name": "G08 nearest primary carries a SINGLE unavailable report -> singleNegativeWarning (still selected, cautioned)",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "a",
+     "distanceMeters": 100.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "a",
+      "evidence_v2": {
+       "version": 1,
+       "condition": {
+        "open": "unknown",
+        "water": "unknown",
+        "usable": "no",
+        "lock": "unknown",
+        "contributor_count": 4,
+        "latest_at": {
+         "__ts__": 1788393000000
+        },
+        "valid_until": {
+         "__ts__": 1788396600000
+        },
+        "computed_at": {
+         "__ts__": 1788393100000
+        },
+        "last_event_at": {
+         "__ts__": 1788393000000
+        },
+        "support": {
+         "open": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 4
+         },
+         "water": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 4
+         },
+         "usable": {
+          "yes": 0,
+          "no": 1,
+          "unknown": 3
+         },
+         "lock": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 4
+         }
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "G09 nearest primary CONFLICTED unavailable majority -> conflictedNegativeWarning",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "a",
+     "distanceMeters": 100.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "a",
+      "evidence_v2": {
+       "version": 1,
+       "condition": {
+        "open": "unknown",
+        "water": "unknown",
+        "usable": "no",
+        "lock": "unknown",
+        "contributor_count": 3,
+        "latest_at": {
+         "__ts__": 1788393000000
+        },
+        "valid_until": {
+         "__ts__": 1788396600000
+        },
+        "computed_at": {
+         "__ts__": 1788393100000
+        },
+        "last_event_at": {
+         "__ts__": 1788393000000
+        },
+        "support": {
+         "open": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         },
+         "water": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         },
+         "usable": {
+          "yes": 1,
+          "no": 2,
+          "unknown": 0
+         },
+         "lock": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         }
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "G10 no primary; one uncorroborated community submission -> communitySubmissionFallback (requiresConfirmation)",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "c",
+     "distanceMeters": 150.0,
+     "map": {
+      "added_by": "user_1",
+      "name": "c",
+      "created_at": {
+       "__ts__": 1749133523664
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "G11 community submission WITH corroborated-usable -> primary (communityCorroborated) recentCorroboratedUsableWithinDetour",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "c",
+     "distanceMeters": 150.0,
+     "map": {
+      "added_by": "user_1",
+      "name": "c",
+      "created_at": {
+       "__ts__": 1749133523664
+      },
+      "evidence_v2": {
+       "version": 1,
+       "condition": {
+        "open": "yes",
+        "water": "unknown",
+        "usable": "yes",
+        "lock": "unknown",
+        "contributor_count": 3,
+        "latest_at": {
+         "__ts__": 1788393000000
+        },
+        "valid_until": {
+         "__ts__": 1788396600000
+        },
+        "computed_at": {
+         "__ts__": 1788393100000
+        },
+        "last_event_at": {
+         "__ts__": 1788393000000
+        },
+        "support": {
+         "open": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "water": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         },
+         "usable": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "lock": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         }
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "G12 only candidate (needs_confirm) toilets -> candidateFallback (requiresConfirmation, evidence cannot promote)",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "cand",
+     "distanceMeters": 90.0,
+     "map": {
+      "added_by": "osm_extended_2026",
+      "needs_confirm": true,
+      "category": "mall",
+      "name": "cand",
+      "evidence_v2": {
+       "version": 1,
+       "condition": {
+        "open": "yes",
+        "water": "unknown",
+        "usable": "yes",
+        "lock": "unknown",
+        "contributor_count": 3,
+        "latest_at": {
+         "__ts__": 1788393000000
+        },
+        "valid_until": {
+         "__ts__": 1788396600000
+        },
+        "computed_at": {
+         "__ts__": 1788393100000
+        },
+        "last_event_at": {
+         "__ts__": 1788393000000
+        },
+        "support": {
+         "open": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "water": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         },
+         "usable": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "lock": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         }
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "G13 only unknown-identity toilets -> candidateFallback reason with unknownIdentity caution",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "u",
+     "distanceMeters": 80.0,
+     "map": {
+      "added_by": "",
+      "name": "u"
+     }
+    }
+   ]
+  },
+  {
+   "name": "G14 every option moderation-flagged -> onlyFlaggedOrUnconfirmedOptions (no selection)",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "f",
+     "distanceMeters": 70.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "f",
+      "is_flagged": true,
+      "flagged_until": {
+       "__ts__": 1788480000000
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "G15 flagged one EXCLUDED, an unflagged primary selected + flagged never appears as an alternative",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "f",
+     "distanceMeters": 50.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "f",
+      "is_flagged": true,
+      "flagged_until": {
+       "__ts__": 1788480000000
+      }
+     }
+    },
+    {
+     "id": "ok",
+     "distanceMeters": 200.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "ok"
+     }
+    },
+    {
+     "id": "ok2",
+     "distanceMeters": 260.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "ok2"
+     }
+    }
+   ]
+  },
+  {
+   "name": "G16 three primaries -> selected + 2 alternatives from same tier, distance sorted",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "p2",
+     "distanceMeters": 220.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "p2"
+     }
+    },
+    {
+     "id": "p1",
+     "distanceMeters": 110.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "p1"
+     }
+    },
+    {
+     "id": "p3",
+     "distanceMeters": 330.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "p3"
+     }
+    },
+    {
+     "id": "p4",
+     "distanceMeters": 440.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "p4"
+     }
+    }
+   ]
+  },
+  {
+   "name": "G17 invalid distances (NaN / negative / Infinity) dropped; the one valid primary wins",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "nan",
+     "distanceMeters": "NaN",
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "nan"
+     }
+    },
+    {
+     "id": "neg",
+     "distanceMeters": -5.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "neg"
+     }
+    },
+    {
+     "id": "inf",
+     "distanceMeters": "Infinity",
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "inf"
+     }
+    },
+    {
+     "id": "good",
+     "distanceMeters": 400.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "good"
+     }
+    }
+   ]
+  },
+  {
+   "name": "G18 EXPIRED corr-usable does NOT promote (evidence ignored) -> nearest chosen, no promotion",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "near",
+     "distanceMeters": 100.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "near"
+     }
+    },
+    {
+     "id": "far",
+     "distanceMeters": 300.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "far",
+      "evidence_v2": {
+       "version": 1,
+       "condition": {
+        "open": "yes",
+        "water": "unknown",
+        "usable": "yes",
+        "lock": "unknown",
+        "contributor_count": 3,
+        "latest_at": {
+         "__ts__": 1788389000000
+        },
+        "valid_until": {
+         "__ts__": 1788392600000
+        },
+        "computed_at": {
+         "__ts__": 1788389100000
+        },
+        "last_event_at": {
+         "__ts__": 1788389000000
+        },
+        "support": {
+         "open": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "water": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         },
+         "usable": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "lock": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         }
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "G19 order-independence: same pool as G16 shuffled -> identical result",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "p4",
+     "distanceMeters": 440.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "p4"
+     }
+    },
+    {
+     "id": "p1",
+     "distanceMeters": 110.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "p1"
+     }
+    },
+    {
+     "id": "p3",
+     "distanceMeters": 330.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "p3"
+     }
+    },
+    {
+     "id": "p2",
+     "distanceMeters": 220.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "p2"
+     }
+    }
+   ]
+  },
+  {
+   "name": "G20 ratings + votes present but NO condition -> zero GO authority, plain nearest",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "a",
+     "distanceMeters": 500.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "a",
+      "evidence_v2": {
+       "version": 1,
+       "ratings": {
+        "count": 9,
+        "average": 4.9,
+        "computed_at": {
+         "__ts__": 1788390000000
+        },
+        "last_event_at": {
+         "__ts__": 1788389000000
+        }
+       },
+       "votes": {
+        "up": 50,
+        "down": 0,
+        "computed_at": {
+         "__ts__": 1788390000000
+        },
+        "last_event_at": {
+         "__ts__": 1788389000000
+        }
+       }
+      }
+     }
+    },
+    {
+     "id": "b",
+     "distanceMeters": 120.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "b"
+     }
+    }
+   ]
+  },
+  {
+   "name": "G21 farther corr-usable ACCEPTED (near 300, far 400: delta 100<=400 and 400<=450) -> recentCorroboratedUsableWithinDetour promotes 'far'",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "near",
+     "distanceMeters": 300.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "near"
+     }
+    },
+    {
+     "id": "far",
+     "distanceMeters": 400.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "far",
+      "evidence_v2": {
+       "version": 1,
+       "condition": {
+        "open": "yes",
+        "water": "unknown",
+        "usable": "yes",
+        "lock": "unknown",
+        "contributor_count": 3,
+        "latest_at": {
+         "__ts__": 1788393000000
+        },
+        "valid_until": {
+         "__ts__": 1788396600000
+        },
+        "computed_at": {
+         "__ts__": 1788393100000
+        },
+        "last_event_at": {
+         "__ts__": 1788393000000
+        },
+        "support": {
+         "open": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "water": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         },
+         "usable": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "lock": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         }
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "G22 nearest primary corroborated-usable BUT water reported out + lock reported out -> positive selection carrying water/lock cautions",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "a",
+     "distanceMeters": 100.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "name": "a",
+      "evidence_v2": {
+       "version": 1,
+       "condition": {
+        "open": "yes",
+        "water": "no",
+        "usable": "yes",
+        "lock": "no",
+        "contributor_count": 3,
+        "latest_at": {
+         "__ts__": 1788393000000
+        },
+        "valid_until": {
+         "__ts__": 1788396600000
+        },
+        "computed_at": {
+         "__ts__": 1788393100000
+        },
+        "last_event_at": {
+         "__ts__": 1788393000000
+        },
+        "support": {
+         "open": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "water": {
+          "yes": 0,
+          "no": 3,
+          "unknown": 0
+         },
+         "usable": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "lock": {
+          "yes": 0,
+          "no": 3,
+          "unknown": 0
+         }
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "BND-G1 gap == 400.0 exactly -> PROMOTE (withinEvidenceDetour is <=400)",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "near",
+     "distanceMeters": 1000.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "category": "govt",
+      "name": "near"
+     }
+    },
+    {
+     "id": "far",
+     "distanceMeters": 1400.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "category": "govt",
+      "name": "far",
+      "evidence_v2": {
+       "version": 1,
+       "condition": {
+        "open": "yes",
+        "water": "unknown",
+        "usable": "yes",
+        "lock": "unknown",
+        "contributor_count": 3,
+        "latest_at": {
+         "__ts__": 1788393000000
+        },
+        "valid_until": {
+         "__ts__": 1788396600000
+        },
+        "computed_at": {
+         "__ts__": 1788393100000
+        },
+        "last_event_at": {
+         "__ts__": 1788393000000
+        },
+        "support": {
+         "open": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "water": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         },
+         "usable": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "lock": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         }
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "BND-G2 gap == 400.001 -> do NOT promote -> nearest",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "near",
+     "distanceMeters": 1000.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "category": "govt",
+      "name": "near"
+     }
+    },
+    {
+     "id": "far",
+     "distanceMeters": 1400.001,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "category": "govt",
+      "name": "far",
+      "evidence_v2": {
+       "version": 1,
+       "condition": {
+        "open": "yes",
+        "water": "unknown",
+        "usable": "yes",
+        "lock": "unknown",
+        "contributor_count": 3,
+        "latest_at": {
+         "__ts__": 1788393000000
+        },
+        "valid_until": {
+         "__ts__": 1788396600000
+        },
+        "computed_at": {
+         "__ts__": 1788393100000
+        },
+        "last_event_at": {
+         "__ts__": 1788393000000
+        },
+        "support": {
+         "open": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "water": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         },
+         "usable": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "lock": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         }
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "BND-G3 ratio == 1.5 exactly (300 -> 450) -> PROMOTE",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "near",
+     "distanceMeters": 300.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "category": "govt",
+      "name": "near"
+     }
+    },
+    {
+     "id": "far",
+     "distanceMeters": 450.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "category": "govt",
+      "name": "far",
+      "evidence_v2": {
+       "version": 1,
+       "condition": {
+        "open": "yes",
+        "water": "unknown",
+        "usable": "yes",
+        "lock": "unknown",
+        "contributor_count": 3,
+        "latest_at": {
+         "__ts__": 1788393000000
+        },
+        "valid_until": {
+         "__ts__": 1788396600000
+        },
+        "computed_at": {
+         "__ts__": 1788393100000
+        },
+        "last_event_at": {
+         "__ts__": 1788393000000
+        },
+        "support": {
+         "open": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "water": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         },
+         "usable": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "lock": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         }
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "BND-G4 ratio == 1.5 + eps (300 -> 450.001) -> do NOT promote",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "near",
+     "distanceMeters": 300.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "category": "govt",
+      "name": "near"
+     }
+    },
+    {
+     "id": "far",
+     "distanceMeters": 450.001,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "category": "govt",
+      "name": "far",
+      "evidence_v2": {
+       "version": 1,
+       "condition": {
+        "open": "yes",
+        "water": "unknown",
+        "usable": "yes",
+        "lock": "unknown",
+        "contributor_count": 3,
+        "latest_at": {
+         "__ts__": 1788393000000
+        },
+        "valid_until": {
+         "__ts__": 1788396600000
+        },
+        "computed_at": {
+         "__ts__": 1788393100000
+        },
+        "last_event_at": {
+         "__ts__": 1788393000000
+        },
+        "support": {
+         "open": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "water": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         },
+         "usable": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "lock": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         }
+        }
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "BND-G5 equal distance -> deterministic lexical id order (bbb vs aaa -> aaa)",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "bbb",
+     "distanceMeters": 200.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "category": "govt",
+      "name": "bbb"
+     }
+    },
+    {
+     "id": "aaa",
+     "distanceMeters": 200.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "category": "govt",
+      "name": "aaa"
+     }
+    }
+   ]
+  },
+  {
+   "name": "BND-G6 near-equal distance (200.0 vs 200.0000001) -> nearer id wins",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "x2",
+     "distanceMeters": 200.0000001,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "category": "govt",
+      "name": "x2"
+     }
+    },
+    {
+     "id": "x1",
+     "distanceMeters": 200.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "category": "govt",
+      "name": "x1"
+     }
+    }
+   ]
+  }
+ ],
+ "revalidation": [
+  {
+   "name": "R01 unchanged selected, no confirmation -> launch",
+   "targetId": null,
+   "stale": {
+    "userLat": 26.3,
+    "userLng": 73.1,
+    "nowMs": 1788393600000,
+    "pool": [
+     {
+      "id": "a",
+      "lat": 26.3009,
+      "lng": 73.1,
+      "map": {
+       "added_by": "osm_india_import_2026",
+       "name": "a"
+      }
+     }
+    ]
+   },
+   "fresh": {
+    "userLat": 26.3,
+    "userLng": 73.1,
+    "nowMs": 1788393660000,
+    "pool": [
+     {
+      "id": "a",
+      "lat": 26.3009,
+      "lng": 73.1,
+      "map": {
+       "added_by": "osm_india_import_2026",
+       "name": "a"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "R02 fresh selected is a DIFFERENT toilet -> refreshSuggestion",
+   "targetId": null,
+   "stale": {
+    "userLat": 26.3,
+    "userLng": 73.1,
+    "nowMs": 1788393600000,
+    "pool": [
+     {
+      "id": "a",
+      "lat": 26.3009,
+      "lng": 73.1,
+      "map": {
+       "added_by": "osm_india_import_2026",
+       "name": "a"
+      }
+     }
+    ]
+   },
+   "fresh": {
+    "userLat": 26.4,
+    "userLng": 73.1,
+    "nowMs": 1788393660000,
+    "pool": [
+     {
+      "id": "a",
+      "lat": 26.3009,
+      "lng": 73.1,
+      "map": {
+       "added_by": "osm_india_import_2026",
+       "name": "a"
+      }
+     },
+     {
+      "id": "b",
+      "lat": 26.4001,
+      "lng": 73.1,
+      "map": {
+       "added_by": "osm_india_import_2026",
+       "name": "b"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "R03 same selected but it GAINED a corroborated-unavailable caution -> refreshOption",
+   "targetId": null,
+   "stale": {
+    "userLat": 26.3,
+    "userLng": 73.1,
+    "nowMs": 1788393600000,
+    "pool": [
+     {
+      "id": "a",
+      "lat": 26.3009,
+      "lng": 73.1,
+      "map": {
+       "added_by": "osm_india_import_2026",
+       "name": "a"
+      }
+     }
+    ]
+   },
+   "fresh": {
+    "userLat": 26.3,
+    "userLng": 73.1,
+    "nowMs": 1788393660000,
+    "pool": [
+     {
+      "id": "a",
+      "lat": 26.3009,
+      "lng": 73.1,
+      "map": {
+       "added_by": "osm_india_import_2026",
+       "name": "a",
+       "evidence_v2": {
+        "version": 1,
+        "condition": {
+         "open": "no",
+         "water": "unknown",
+         "usable": "no",
+         "lock": "unknown",
+         "contributor_count": 3,
+         "latest_at": {
+          "__ts__": 1788393600000
+         },
+         "valid_until": {
+          "__ts__": 1788397200000
+         },
+         "computed_at": {
+          "__ts__": 1788393650000
+         },
+         "last_event_at": {
+          "__ts__": 1788393600000
+         },
+         "support": {
+          "open": {
+           "yes": 0,
+           "no": 3,
+           "unknown": 0
+          },
+          "water": {
+           "yes": 0,
+           "no": 0,
+           "unknown": 3
+          },
+          "usable": {
+           "yes": 0,
+           "no": 3,
+           "unknown": 0
+          },
+          "lock": {
+           "yes": 0,
+           "no": 0,
+           "unknown": 3
+          }
+         }
+        }
+       }
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "R04 fresh selected requires confirmation (community fallback) -> confirmThenLaunch",
+   "targetId": null,
+   "stale": {
+    "userLat": 26.3,
+    "userLng": 73.1,
+    "nowMs": 1788393600000,
+    "pool": [
+     {
+      "id": "c",
+      "lat": 26.3009,
+      "lng": 73.1,
+      "map": {
+       "added_by": "user_1",
+       "name": "c",
+       "created_at": {
+        "__ts__": 1749133523664
+       }
+      }
+     }
+    ]
+   },
+   "fresh": {
+    "userLat": 26.3,
+    "userLng": 73.1,
+    "nowMs": 1788393660000,
+    "pool": [
+     {
+      "id": "c",
+      "lat": 26.3009,
+      "lng": 73.1,
+      "map": {
+       "added_by": "user_1",
+       "name": "c",
+       "created_at": {
+        "__ts__": 1749133523664
+       }
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "R05 fresh has NO selection -> refreshSuggestion",
+   "targetId": null,
+   "stale": {
+    "userLat": 26.3,
+    "userLng": 73.1,
+    "nowMs": 1788393600000,
+    "pool": [
+     {
+      "id": "a",
+      "lat": 26.3009,
+      "lng": 73.1,
+      "map": {
+       "added_by": "osm_india_import_2026",
+       "name": "a"
+      }
+     }
+    ]
+   },
+   "fresh": {
+    "userLat": 26.3,
+    "userLng": 73.1,
+    "nowMs": 1788393660000,
+    "pool": []
+   }
+  },
+  {
+   "name": "R06 navigate a PINNED ALTERNATIVE ('far') that got materially worse in fresh -> refreshOption",
+   "targetId": "far",
+   "stale": {
+    "userLat": 26.3,
+    "userLng": 73.1,
+    "nowMs": 1788393600000,
+    "pool": [
+     {
+      "id": "near",
+      "lat": 26.3009,
+      "lng": 73.1,
+      "map": {
+       "added_by": "osm_india_import_2026",
+       "name": "near"
+      }
+     },
+     {
+      "id": "far",
+      "lat": 26.302,
+      "lng": 73.1,
+      "map": {
+       "added_by": "osm_india_import_2026",
+       "name": "far"
+      }
+     }
+    ]
+   },
+   "fresh": {
+    "userLat": 26.3,
+    "userLng": 73.1,
+    "nowMs": 1788393660000,
+    "pool": [
+     {
+      "id": "near",
+      "lat": 26.3009,
+      "lng": 73.1,
+      "map": {
+       "added_by": "osm_india_import_2026",
+       "name": "near"
+      }
+     },
+     {
+      "id": "far",
+      "lat": 26.302,
+      "lng": 73.1,
+      "map": {
+       "added_by": "osm_india_import_2026",
+       "name": "far",
+       "evidence_v2": {
+        "version": 1,
+        "condition": {
+         "open": "unknown",
+         "water": "unknown",
+         "usable": "no",
+         "lock": "unknown",
+         "contributor_count": 4,
+         "latest_at": {
+          "__ts__": 1788393600000
+         },
+         "valid_until": {
+          "__ts__": 1788397200000
+         },
+         "computed_at": {
+          "__ts__": 1788393650000
+         },
+         "last_event_at": {
+          "__ts__": 1788393600000
+         },
+         "support": {
+          "open": {
+           "yes": 0,
+           "no": 0,
+           "unknown": 4
+          },
+          "water": {
+           "yes": 0,
+           "no": 0,
+           "unknown": 4
+          },
+          "usable": {
+           "yes": 0,
+           "no": 1,
+           "unknown": 3
+          },
+          "lock": {
+           "yes": 0,
+           "no": 0,
+           "unknown": 4
+          }
+         }
+        }
+       }
+      }
+     }
+    ]
+   }
+  }
+ ],
+ "freshness": [
+  {
+   "name": "BND-F1 age == maxAge exactly -> fresh (<=)",
+   "positionTsMs": 1788393590000,
+   "nowMs": 1788393600000,
+   "maxAgeSeconds": 10
+  },
+  {
+   "name": "BND-F2 age == maxAge + 1 ms -> stale",
+   "positionTsMs": 1788393589999,
+   "nowMs": 1788393600000,
+   "maxAgeSeconds": 10
+  },
+  {
+   "name": "BND-F3 age == 0 -> fresh",
+   "positionTsMs": 1788393600000,
+   "nowMs": 1788393600000,
+   "maxAgeSeconds": 10
+  },
+  {
+   "name": "BND-F4 future timestamp (age negative) -> reject",
+   "positionTsMs": 1788393600001,
+   "nowMs": 1788393600000,
+   "maxAgeSeconds": 10
+  },
+  {
+   "name": "BND-F5 future by 1 minute -> reject",
+   "positionTsMs": 1788393660000,
+   "nowMs": 1788393600000,
+   "maxAgeSeconds": 30
+  }
+ ],
+ "distances": [
+  {
+   "name": "D1 same point -> 0 m",
+   "from": {
+    "lat": 26.2389,
+    "lng": 73.0243
+   },
+   "to": [
+    {
+     "id": "same",
+     "lat": 26.2389,
+     "lng": 73.0243
+    }
+   ]
+  },
+  {
+   "name": "D2 ~10 m north",
+   "from": {
+    "lat": 26.2389,
+    "lng": 73.0243
+   },
+   "to": [
+    {
+     "id": "n10",
+     "lat": 26.23899,
+     "lng": 73.0243
+    }
+   ]
+  },
+  {
+   "name": "D3 ~400 m north (GO detour cap)",
+   "from": {
+    "lat": 26.2389,
+    "lng": 73.0243
+   },
+   "to": [
+    {
+     "id": "n400",
+     "lat": 26.2425,
+     "lng": 73.0243
+    }
+   ]
+  },
+  {
+   "name": "D4 ~1.5 km east",
+   "from": {
+    "lat": 26.2389,
+    "lng": 73.0243
+   },
+   "to": [
+    {
+     "id": "e1500",
+     "lat": 26.2389,
+     "lng": 73.0393
+    }
+   ]
+  },
+  {
+   "name": "D5 ~15 km south-west",
+   "from": {
+    "lat": 26.2389,
+    "lng": 73.0243
+   },
+   "to": [
+    {
+     "id": "sw15k",
+     "lat": 26.143900000000002,
+     "lng": 72.9183
+    }
+   ]
+  },
+  {
+   "name": "D6 across the equator-ward degree boundary",
+   "from": {
+    "lat": 25.9999,
+    "lng": 73.0
+   },
+   "to": [
+    {
+     "id": "deg",
+     "lat": 26.0001,
+     "lng": 73.0
+    }
+   ]
+  },
+  {
+   "name": "D7 Jodhpur -> Jaipur (~335 km)",
+   "from": {
+    "lat": 26.2389,
+    "lng": 73.0243
+   },
+   "to": [
+    {
+     "id": "jaipur",
+     "lat": 26.9124,
+     "lng": 75.7873
+    }
+   ]
+  },
+  {
+   "name": "D8 one call, three targets (ordering input)",
+   "from": {
+    "lat": 26.2389,
+    "lng": 73.0243
+   },
+   "to": [
+    {
+     "id": "b",
+     "lat": 26.2409,
+     "lng": 73.0243
+    },
+    {
+     "id": "a",
+     "lat": 26.2394,
+     "lng": 73.0248
+    },
+    {
+     "id": "c",
+     "lat": 26.2189,
+     "lng": 73.0543
+    }
+   ]
+  }
+ ],
+ "hint": [
+  {
+   "name": "H1 hint = fresh NON-selected active-tier alternative -> focus that alternative",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "near",
+     "distanceMeters": 100.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "latitude": 26.3,
+      "longitude": 73.1,
+      "name": "near"
+     }
+    },
+    {
+     "id": "mid",
+     "distanceMeters": 180.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "latitude": 26.3,
+      "longitude": 73.1,
+      "name": "mid",
+      "evidence_v2": {
+       "version": 1,
+       "condition": {
+        "open": "yes",
+        "water": "unknown",
+        "usable": "yes",
+        "lock": "unknown",
+        "contributor_count": 3,
+        "latest_at": {
+         "__ts__": 1788393240000
+        },
+        "valid_until": {
+         "__ts__": 1788396840000
+        },
+        "computed_at": {
+         "__ts__": 1788393300000
+        },
+        "last_event_at": {
+         "__ts__": 1788393240000
+        },
+        "support": {
+         "open": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "water": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         },
+         "usable": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "lock": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         }
+        }
+       }
+      }
+     }
+    },
+    {
+     "id": "far",
+     "distanceMeters": 900.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "latitude": 26.3,
+      "longitude": 73.1,
+      "name": "far"
+     }
+    }
+   ],
+   "hintId": "mid"
+  },
+  {
+   "name": "H2 hint == selected -> focus null",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "near",
+     "distanceMeters": 100.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "latitude": 26.3,
+      "longitude": 73.1,
+      "name": "near"
+     }
+    },
+    {
+     "id": "mid",
+     "distanceMeters": 180.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "latitude": 26.3,
+      "longitude": 73.1,
+      "name": "mid",
+      "evidence_v2": {
+       "version": 1,
+       "condition": {
+        "open": "yes",
+        "water": "unknown",
+        "usable": "yes",
+        "lock": "unknown",
+        "contributor_count": 3,
+        "latest_at": {
+         "__ts__": 1788393240000
+        },
+        "valid_until": {
+         "__ts__": 1788396840000
+        },
+        "computed_at": {
+         "__ts__": 1788393300000
+        },
+        "last_event_at": {
+         "__ts__": 1788393240000
+        },
+        "support": {
+         "open": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "water": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         },
+         "usable": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "lock": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         }
+        }
+       }
+      }
+     }
+    },
+    {
+     "id": "far",
+     "distanceMeters": 900.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "latitude": 26.3,
+      "longitude": 73.1,
+      "name": "far"
+     }
+    }
+   ],
+   "hintId": "near"
+  },
+  {
+   "name": "H3 hint empty string -> focus null",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "near",
+     "distanceMeters": 100.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "latitude": 26.3,
+      "longitude": 73.1,
+      "name": "near"
+     }
+    },
+    {
+     "id": "mid",
+     "distanceMeters": 180.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "latitude": 26.3,
+      "longitude": 73.1,
+      "name": "mid",
+      "evidence_v2": {
+       "version": 1,
+       "condition": {
+        "open": "yes",
+        "water": "unknown",
+        "usable": "yes",
+        "lock": "unknown",
+        "contributor_count": 3,
+        "latest_at": {
+         "__ts__": 1788393240000
+        },
+        "valid_until": {
+         "__ts__": 1788396840000
+        },
+        "computed_at": {
+         "__ts__": 1788393300000
+        },
+        "last_event_at": {
+         "__ts__": 1788393240000
+        },
+        "support": {
+         "open": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "water": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         },
+         "usable": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "lock": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         }
+        }
+       }
+      }
+     }
+    },
+    {
+     "id": "far",
+     "distanceMeters": 900.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "latitude": 26.3,
+      "longitude": 73.1,
+      "name": "far"
+     }
+    }
+   ],
+   "hintId": ""
+  },
+  {
+   "name": "H4 hint unknown id -> focus null",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "near",
+     "distanceMeters": 100.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "latitude": 26.3,
+      "longitude": 73.1,
+      "name": "near"
+     }
+    },
+    {
+     "id": "mid",
+     "distanceMeters": 180.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "latitude": 26.3,
+      "longitude": 73.1,
+      "name": "mid",
+      "evidence_v2": {
+       "version": 1,
+       "condition": {
+        "open": "yes",
+        "water": "unknown",
+        "usable": "yes",
+        "lock": "unknown",
+        "contributor_count": 3,
+        "latest_at": {
+         "__ts__": 1788393240000
+        },
+        "valid_until": {
+         "__ts__": 1788396840000
+        },
+        "computed_at": {
+         "__ts__": 1788393300000
+        },
+        "last_event_at": {
+         "__ts__": 1788393240000
+        },
+        "support": {
+         "open": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "water": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         },
+         "usable": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "lock": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         }
+        }
+       }
+      }
+     }
+    },
+    {
+     "id": "far",
+     "distanceMeters": 900.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "latitude": 26.3,
+      "longitude": 73.1,
+      "name": "far"
+     }
+    }
+   ],
+   "hintId": "ghost-id"
+  },
+  {
+   "name": "H5 hint moderation-flagged (dropped from active tier) -> focus null",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "near",
+     "distanceMeters": 100.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "latitude": 26.3,
+      "longitude": 73.1,
+      "name": "near"
+     }
+    },
+    {
+     "id": "flag",
+     "distanceMeters": 150.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "latitude": 26.3,
+      "longitude": 73.1,
+      "name": "flag",
+      "is_flagged": true,
+      "flagged_until": {
+       "__ts__": 1788566400000
+      },
+      "evidence_v2": {
+       "version": 1,
+       "condition": {
+        "open": "yes",
+        "water": "unknown",
+        "usable": "yes",
+        "lock": "unknown",
+        "contributor_count": 3,
+        "latest_at": {
+         "__ts__": 1788393240000
+        },
+        "valid_until": {
+         "__ts__": 1788396840000
+        },
+        "computed_at": {
+         "__ts__": 1788393300000
+        },
+        "last_event_at": {
+         "__ts__": 1788393240000
+        },
+        "support": {
+         "open": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "water": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         },
+         "usable": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "lock": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         }
+        }
+       }
+      }
+     }
+    },
+    {
+     "id": "far",
+     "distanceMeters": 900.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "latitude": 26.3,
+      "longitude": 73.1,
+      "name": "far"
+     }
+    }
+   ],
+   "hintId": "flag"
+  },
+  {
+   "name": "H6 hint lower authority tier than the active tier -> focus null",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "near",
+     "distanceMeters": 100.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "latitude": 26.3,
+      "longitude": 73.1,
+      "name": "near"
+     }
+    },
+    {
+     "id": "cand",
+     "distanceMeters": 120.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "latitude": 26.3,
+      "longitude": 73.1,
+      "name": "cand",
+      "needs_confirm": true,
+      "category": "petrol"
+     }
+    },
+    {
+     "id": "far",
+     "distanceMeters": 400.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "latitude": 26.3,
+      "longitude": 73.1,
+      "name": "far",
+      "evidence_v2": {
+       "version": 1,
+       "condition": {
+        "open": "yes",
+        "water": "unknown",
+        "usable": "yes",
+        "lock": "unknown",
+        "contributor_count": 3,
+        "latest_at": {
+         "__ts__": 1788393240000
+        },
+        "valid_until": {
+         "__ts__": 1788396840000
+        },
+        "computed_at": {
+         "__ts__": 1788393300000
+        },
+        "last_event_at": {
+         "__ts__": 1788393240000
+        },
+        "support": {
+         "open": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "water": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         },
+         "usable": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "lock": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         }
+        }
+       }
+      }
+     }
+    }
+   ],
+   "hintId": "cand"
+  },
+  {
+   "name": "H7 candidate alternative when the candidate tier is genuinely active -> focus it",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "c1",
+     "distanceMeters": 100.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "latitude": 26.3,
+      "longitude": 73.1,
+      "name": "c1",
+      "needs_confirm": true
+     }
+    },
+    {
+     "id": "c2",
+     "distanceMeters": 160.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "latitude": 26.3,
+      "longitude": 73.1,
+      "name": "c2",
+      "needs_confirm": true
+     }
+    }
+   ],
+   "hintId": "c2"
+  },
+  {
+   "name": "H8 focused-alt presentation comes from presentGoAlternative, not the selected GoDecision",
+   "nowMs": 1788393600000,
+   "pool": [
+    {
+     "id": "sel",
+     "distanceMeters": 100.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "latitude": 26.3,
+      "longitude": 73.1,
+      "name": "sel",
+      "evidence_v2": {
+       "version": 1,
+       "condition": {
+        "open": "yes",
+        "water": "unknown",
+        "usable": "yes",
+        "lock": "unknown",
+        "contributor_count": 3,
+        "latest_at": {
+         "__ts__": 1788393240000
+        },
+        "valid_until": {
+         "__ts__": 1788396840000
+        },
+        "computed_at": {
+         "__ts__": 1788393300000
+        },
+        "last_event_at": {
+         "__ts__": 1788393240000
+        },
+        "support": {
+         "open": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "water": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         },
+         "usable": {
+          "yes": 3,
+          "no": 0,
+          "unknown": 0
+         },
+         "lock": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 3
+         }
+        }
+       }
+      }
+     }
+    },
+    {
+     "id": "altw",
+     "distanceMeters": 150.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "latitude": 26.3,
+      "longitude": 73.1,
+      "name": "altw",
+      "evidence_v2": {
+       "version": 1,
+       "condition": {
+        "open": "unknown",
+        "water": "unknown",
+        "usable": "no",
+        "lock": "unknown",
+        "contributor_count": 6,
+        "latest_at": {
+         "__ts__": 1788393120000
+        },
+        "valid_until": {
+         "__ts__": 1788396720000
+        },
+        "computed_at": {
+         "__ts__": 1788393180000
+        },
+        "last_event_at": {
+         "__ts__": 1788393120000
+        },
+        "support": {
+         "open": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 6
+         },
+         "water": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 6
+         },
+         "usable": {
+          "yes": 2,
+          "no": 3,
+          "unknown": 1
+         },
+         "lock": {
+          "yes": 0,
+          "no": 0,
+          "unknown": 6
+         }
+        }
+       }
+      }
+     }
+    },
+    {
+     "id": "far",
+     "distanceMeters": 900.0,
+     "map": {
+      "added_by": "osm_india_import_2026",
+      "latitude": 26.3,
+      "longitude": 73.1,
+      "name": "far"
+     }
+    }
+   ],
+   "hintId": "altw"
+  }
+ ]
+}

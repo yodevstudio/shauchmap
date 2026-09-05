@@ -1,11 +1,21 @@
 name: "🐛 Bug report"
-description: Something in the app is broken or behaving unexpectedly.
+description: Something in the app or web is broken or behaving unexpectedly.
 title: "[Bug]: "
 labels: ["bug"]
 body:
   - type: markdown
     attributes:
       value: Thanks for taking the time to file a bug! Please fill in as much as you can.
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Surface
+      description: Which one are you reporting on?
+      options:
+        - Android
+        - Instant (web)
+    validations:
+      required: true
   - type: textarea
     id: what-happened
     attributes:
@@ -25,23 +35,26 @@ body:
     attributes:
       label: Steps to reproduce
       placeholder: |
-        1. Open the app
+        1. Open the app or site
         2. Tap …
         3. See …
     validations:
       required: true
   - type: input
-    id: device
+    id: android-device
     attributes:
-      label: Device & Android version
+      label: "Android only: device & OS version"
       placeholder: "e.g. Samsung Galaxy A55, Android 14"
-    validations:
-      required: true
+  - type: input
+    id: instant-browser
+    attributes:
+      label: "Instant only: browser & device/OS"
+      placeholder: "e.g. Chrome 128 on Android 14, or Safari on iOS 17"
   - type: input
     id: app-version
     attributes:
-      label: App version
-      placeholder: "e.g. 1.0.0"
+      label: App version (Android) — leave blank for Instant
+      placeholder: "e.g. 1.0.3"
   - type: textarea
     id: screenshots
     attributes:

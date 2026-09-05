@@ -6,7 +6,10 @@ import '../theme/sm_widgets.dart';
 
 /// Single source of truth for the travel-mode bottom sheet.
 /// Returns the chosen [TravelMode], or null if dismissed.
-/// Pass [distanceMeters] to show per-mode ETA; omit for no ETA.
+///
+/// Pass [distanceMeters] to show a ROUGH per-mode time. These are derived from
+/// STRAIGHT-LINE distance, NOT a Maps route, and are labelled as such — GO V2
+/// does not know walking-route distance/time.
 Future<TravelMode?> showTravelModeSheet(
   BuildContext context, {
   double? distanceMeters,
@@ -66,6 +69,17 @@ Future<TravelMode?> showTravelModeSheet(
                 mode: TravelMode.walking,
                 c: c,
               ),
+              if (driveMin != null) ...[
+                const SizedBox(height: SmTokens.s8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: SmTokens.s20),
+                  child: Text(
+                    'Rough estimate from straight-line distance — not a Maps '
+                    'route time.',
+                    style: SmText.caption.copyWith(color: c.ink3),
+                  ),
+                ),
+              ],
               const SizedBox(height: SmTokens.s16),
             ],
           ),

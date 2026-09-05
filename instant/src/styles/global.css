@@ -1,0 +1,495 @@
+/* ShauchMap Instant — mobile-first, outdoor-readable, one-hand. Native CSS only.
+   No hover-only affordances; colour is never the sole signal.
+   The token family below is tuned to match the Android ShauchMap theme
+   (lib/theme/sm_tokens.dart), with web-adjusted contrast. */
+
+:root {
+  /* Brand green. Android brand text = #0E8C63 / filled = #11A06F; Instant uses a
+     slightly darker #0E7C5A so green *text* + the filled button pass WCAG AA on
+     white (#0E7C5A on #FFF ≈ 5.3:1). Same family, web-tuned contrast. */
+  --brand: #0e7c5a;
+  --brand-strong: #0a6448; /* pressed */
+  --brand-ink: #ffffff;
+  --brand-050: #e8f4ef;
+  --brand-100: #cfe9df;
+
+  /* ink + surfaces — aligned to the Android light theme */
+  --ink: #0e1a16; /* android ink  #0E1A16 */
+  --ink-2: #42514b; /* readable muted (android ink2 #5C6E68 is lighter; web keeps AA) */
+  --ink-3: #5e6d66; /* decorative muted, still ≥4.5:1 on white */
+  --line: #dce6e1; /* android line #DCE6E1 */
+  --soft: #e6eeea; /* android soft #E6EEEA */
+  --bg: #eaf1ed; /* android bg   #E9F0EC — green-tinted so white cards pop */
+  --card: #ffffff;
+
+  --go: #0e7c5a;
+  --caution: #8a5a00; /* darker web variant of android statusUnsure #B8800F — 5.9:1 on white */
+  --caution-bg: #fdf3e0;
+  --caution-line: #efd9ac;
+  --danger: #9a2b2b; /* darker web variant of android statusClosed #D64545 — 6.4:1 */
+  --danger-bg: #fbeceb;
+
+  /* radii — android rCard 16 / rSmall 12 / rSheet 24 / rPill 999 */
+  --radius: 16px;
+  --radius-sm: 12px;
+  --radius-sheet: 24px;
+
+  --tap: 48px; /* android minTouch 48 (≥ the 44 CSS-px a11y floor) */
+  --pad: 16px;
+  --maxw: 600px;
+
+  /* android SmShadow.softLight — brand-tinted #103C2D, lifted */
+  --shadow:
+    0 1px 2px rgba(16, 60, 45, 0.06), 0 12px 28px -14px rgba(16, 60, 45, 0.16);
+  --font:
+    system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', sans-serif;
+
+  /* safe-area shorthands */
+  --sa-l: env(safe-area-inset-left, 0px);
+  --sa-r: env(safe-area-inset-right, 0px);
+  --sa-t: env(safe-area-inset-top, 0px);
+  --sa-b: env(safe-area-inset-bottom, 0px);
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --ink-2: #33403a;
+    --ink-3: #3f4c46;
+    --line: #9aa8a2;
+  }
+}
+
+/* desktop: keep the focused column; only ease the rhythm */
+@media (min-width: 900px) {
+  :root {
+    --pad: 20px;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+body {
+  font-family: var(--font);
+  color: var(--ink);
+  background: var(--bg);
+  line-height: 1.45;
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden; /* page never scrolls sideways */
+}
+/* scroll-lock while a modal is open */
+body.modal-open {
+  overflow: hidden;
+}
+#app {
+  min-height: 100dvh;
+  overflow-x: clip; /* nothing in the app can produce sideways page scroll */
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.25;
+  margin: 0 0 0.35em;
+  overflow-wrap: anywhere; /* long facility names wrap, never overflow */
+  hyphens: auto;
+}
+h1 {
+  font-size: 1.5rem;
+  letter-spacing: -0.01em;
+}
+h2 {
+  font-size: 1.15rem;
+}
+p {
+  margin: 0 0 0.75em;
+}
+a {
+  color: var(--brand);
+}
+
+:focus-visible {
+  outline: 3px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.skip-link {
+  position: absolute;
+  left: -999px;
+  top: 0;
+  background: var(--brand);
+  color: #fff;
+  padding: 10px 14px;
+  z-index: 100;
+}
+.skip-link:focus {
+  left: 8px;
+  top: 8px;
+}
+
+.wrap {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: var(--pad);
+  padding-left: max(var(--pad), var(--sa-l));
+  padding-right: max(var(--pad), var(--sa-r));
+  padding-top: max(var(--pad), var(--sa-t));
+  padding-bottom: calc(var(--pad) + var(--sa-b));
+  overflow-x: clip;
+}
+
+/* buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--tap);
+  padding: 12px 18px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid transparent;
+  font: inherit;
+  font-weight: 650;
+  line-height: 1.2;
+  cursor: pointer;
+  text-decoration: none;
+  width: 100%;
+  overflow-wrap: anywhere;
+}
+.btn-primary {
+  background: var(--brand);
+  color: var(--brand-ink);
+}
+.btn-primary:active {
+  background: var(--brand-strong);
+}
+.btn-secondary {
+  background: var(--card);
+  color: var(--ink);
+  border-color: var(--line);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--brand);
+  border-color: transparent;
+  width: auto;
+}
+.btn[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.btn svg {
+  flex: 0 0 auto;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: var(--pad);
+}
+
+.tone-positive {
+  border-left: 5px solid var(--go);
+}
+.tone-neutral {
+  border-left: 5px solid var(--ink-3);
+}
+.tone-warning {
+  border-left: 5px solid var(--caution);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  line-height: 1.3;
+  font-weight: 600;
+  background: var(--brand-050);
+  color: var(--ink-2);
+  border: 1px solid var(--line);
+  max-width: 100%;
+  overflow-wrap: anywhere; /* a long muted pill wraps its text at big zoom */
+}
+.pill-distance {
+  background: var(--brand-050);
+  color: var(--brand-strong);
+  border-color: var(--brand-100);
+  white-space: nowrap; /* the distance is always short — keep it one line */
+}
+.pill-warning {
+  background: var(--caution-bg);
+  color: var(--caution);
+  border-color: var(--caution-line);
+}
+.pill-muted {
+  background: var(--soft);
+  color: var(--ink-3);
+}
+
+.muted {
+  color: var(--ink-3);
+}
+.small {
+  font-size: 0.85rem;
+}
+.stack > * + * {
+  margin-top: 12px;
+}
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap; /* pills wrap onto the next line rather than overflow */
+}
+
+/* the recommendation heading row — narrow-screen safe */
+.spread {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.spread > :first-child {
+  min-width: 0; /* let the heading shrink / wrap */
+  flex: 1 1 8ch;
+}
+.spread > .pill,
+.spread > .pill-distance {
+  flex: 0 0 auto;
+  align-self: flex-start;
+}
+
+.cautions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.cautions li {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--caution-bg);
+  color: var(--caution);
+  font-size: 0.9rem;
+  font-weight: 550;
+  overflow-wrap: anywhere;
+}
+.cautions li svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.osm-attribution {
+  margin-top: 24px;
+  padding: 10px 4px max(10px, var(--sa-b));
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--muted, #767676);
+}
+
+.osm-attribution a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.demo-badge {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: #2b2b2b;
+  color: #ffd9a8;
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 5px 10px;
+  padding-left: max(10px, var(--sa-l));
+  padding-right: max(10px, var(--sa-r));
+  letter-spacing: 0.02em;
+}
+
+.home-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 4px 2px;
+  text-decoration: none;
+}
+.brandmark {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 750;
+  color: var(--ink);
+  min-width: 0;
+}
+.brandmark img {
+  width: 28px;
+  height: 28px;
+  display: block;
+  flex: 0 0 auto;
+}
+
+.hero {
+  text-align: center;
+  padding: 8px 0 4px;
+}
+.hero .logo {
+  width: 72px;
+  height: 72px;
+  margin: 6px auto 14px;
+  display: block;
+}
+.hero p {
+  color: var(--ink-2);
+  max-width: 40ch;
+  margin-inline: auto;
+}
+
+.state {
+  text-align: center;
+  padding: 28px 8px;
+}
+.state-icon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 10px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--brand-050);
+  color: var(--brand);
+  border: 1px solid var(--brand-100);
+}
+.state h2 {
+  margin-bottom: 6px;
+}
+.state p {
+  color: var(--ink-2);
+  max-width: 36ch;
+  margin-inline: auto;
+}
+
+.spinner {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 3px solid var(--brand-100);
+  border-top-color: var(--brand);
+  margin: 18px auto;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* bottom sheet / dialog — short-screen + safe-area safe */
+.sheet-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  max-width: 100vw;
+  background: rgba(10, 20, 16, 0.42);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 50;
+  padding: 0;
+  overflow: hidden;
+}
+.sheet {
+  background: var(--card);
+  width: 100%;
+  max-width: var(--maxw);
+  border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
+  padding: 18px var(--pad);
+  padding-left: max(var(--pad), var(--sa-l));
+  padding-right: max(var(--pad), var(--sa-r));
+  padding-bottom: calc(18px + var(--sa-b));
+  max-height: min(88dvh, 640px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.sheet h2 {
+  margin-bottom: 12px;
+}
+.mode-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+  margin-bottom: 10px;
+  text-align: left;
+}
+.mode-row svg {
+  flex: 0 0 auto;
+  color: var(--brand);
+}
+.mode-row .label {
+  font-weight: 600;
+  min-width: 0;
+}
+.mode-row .eta {
+  margin-left: auto;
+  color: var(--ink-2);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.alt {
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.alt:first-child {
+  border-top: none;
+}
+.alt .spread {
+  margin-bottom: 4px;
+}
+.alt-name {
+  font-weight: 600;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .spinner {
+    animation: none;
+    border-top-color: var(--brand-100);
+  }
+}

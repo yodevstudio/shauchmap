@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../anim/loomap_springs.dart';
+import '../anim/shauchmap_springs.dart';
 
 class BouncyTap extends StatefulWidget {
   final Widget child;

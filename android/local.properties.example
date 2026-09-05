@@ -1,0 +1,12 @@
+# Copy to android/local.properties (git-ignored). flutter.sdk / sdk.dir are
+# rewritten automatically by `flutter run` / `flutter build` — you don't need
+# to set them by hand.
+#
+# Google Maps SDK key (native map rendering). Create one in Google Cloud
+# Console -> APIs & Services -> Credentials, restrict it to the Maps SDK for
+# Android, and restrict it by this app's package name (com.shauchmap.app)
+# and your own release-signing certificate's SHA-1. Debug builds and CI
+# checks compile fine without this (a harmless placeholder is used instead)
+# but the map will be blank at runtime until a real key is set. A --release
+# build fails closed if this is missing — see android/app/build.gradle.kts.
+MAPS_API_KEY=your_own_restricted_maps_sdk_key_here

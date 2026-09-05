@@ -8,23 +8,23 @@ key.properties
 android/key.properties
 android/local.properties
 **/google-services.json
-ios/Runner/GoogleService-Info.plist
 lib/firebase_options.dart
-tools/service-account.json
 
-# ---- LARGE DATASETS & HEAVY ASSETS (TOO BIG FOR REPO) ----
-tools/swachh_bharat_data_full.json
-tools/loomap_extended_data.json
-loomap_extended_data.json
+# ---- LARGE DATASETS (NOT DISTRIBUTED IN THIS REPO — see docs/data-sources.md) ----
 swachh_bharat_data_full.json
 assets/audio/*.mp3
 
 # ---- LOCAL DEV ECOSYSTEM & WORKSPACE ----
 .puro/
 scratch/
+scratchpad/
 migrate_working_dir/
 *.log
 flutter_*.log
+
+# ---- INTERNAL REVIEW/EVIDENCE BUNDLES (NEVER PUBLIC) ----
+ShauchMap_PHASE_*.zip
+*_REVIEW.zip
 
 # ---- FLUTTER / DART INTERNAL BUILD ARCHITECTURE ----
 .dart_tool/
@@ -54,13 +54,6 @@ android/.gradle/
 /android/app/release/
 *.apk
 *.aab
-
-# ---- IOS COMPILATION ARTIFACTS ----
-ios/Pods/
-ios/.symlinks/
-ios/Flutter/Flutter.framework
-ios/Flutter/Flutter.podspec
-**/Flutter/ephemeral/
 
 # ---- SYSTEM METADATA JUNK ----
 .DS_Store

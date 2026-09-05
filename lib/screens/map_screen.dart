@@ -9,7 +9,6 @@ import 'package:geocoding/geocoding.dart';
 import '../services/firestore_service.dart';
 import '../services/custom_haptics_service.dart';
 import '../services/orientation_engine.dart';
-import '../logic/trust.dart';
 import '../map_style.dart';
 import 'detail_sheet.dart';
 import 'list_screen.dart';
@@ -17,26 +16,18 @@ import '../theme/sm_tokens.dart';
 import '../theme/sm_theme.dart';
 import '../theme/sm_widgets.dart';
 import '../widgets/sm_states.dart';
+import '../widgets/evidence_status_label.dart';
+import '../widgets/osm_attribution_badge.dart';
 
 import 'package:collection/collection.dart';
 
 enum CameraTrackMode { gps, toilet, free }
 
-double bayesianRating(
-  double rawAvg,
-  int count, {
-  double m = 5,
-  double globalMean = 3.5,
-}) => (count / (count + m)) * rawAvg + (m / (count + m)) * globalMean;
-
-double wilsonScore(int up, int down) {
-  final int n = up + down;
-  if (n == 0) return 0.0;
-  final double z = 1.96;
-  final double p = up / n;
-  return (p + z * z / (2 * n) - z * sqrt((p * (1 - p) + z * z / (4 * n)) / n)) /
-      (1 + z * z / n);
-}
+// (Removed) : there is no vote-derived "spam" auto-hide. A vote is
+// OPINION, not identity confirmation or moderation authority — a coordinated
+// set of accounts must not be able to suppress a real facility from browse
+// results. Votes are shown as opinion evidence only; removal/hiding must come
+// from a defined moderation / identity-confirmation process (not built here).
 
 class MapScreen extends StatefulWidget {
   final List<Toilet> toilets;
@@ -86,11 +77,11 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   GoogleMapController? _mapController;
   Toilet? _selectedToilet;
   final OrientationEngine _orientationEngine = OrientationEngine();
-  bool _filterOnlyFree = false;
-  bool _filterOnlyOpen = false;
-  bool _filterOnlyWestern = false;
+  // honesty pass: only "Water listed" survives — it selects toilets
+  // whose source positively listed water. "Open Now" / "Free" / "Western" /
+  // "Women Safe" filtered on importer defaults and missing fields, so they
+  // turned "unknown" into a false "no" and were removed.
   bool _filterOnlyWater = false;
-  bool _filterOnlyWomenSafe = false;
   String _cityName = 'Locating...';
   PageController? _pageController;
   Timer? _prefetchTimer;
@@ -168,24 +159,14 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
   void _updateSortedToilets() {
     List<Toilet> list = List.from(widget.toilets);
-    // M6: hide likely-spam entries with overwhelming downvotes
-    list = list
-        .where(
-          (t) =>
-              !(wilsonScore(t.upvoteCount, t.downvoteCount) < 0.15 &&
-                  (t.upvoteCount + t.downvoteCount) > 8),
-        )
-        .toList();
-    if (_filterOnlyFree) list = list.where((t) => t.isFree).toList();
-    if (_filterOnlyOpen)
+    // NO automatic crowd-threshold hiding. Votes never remove a toilet from
+    // browse results (see the note near the top of this file).
+    // Only positive source/submitter evidence filters the list now (Truth V2).
+    if (_filterOnlyWater) {
       list = list
-          .where(
-            (t) => t.isOpen || t.addedBy == 'osm_import' || t.addedBy.isEmpty,
-          )
+          .where((t) => t.truth.amenities.water == EvidenceState.present)
           .toList();
-    if (_filterOnlyWestern) list = list.where((t) => t.isWestern).toList();
-    if (_filterOnlyWater) list = list.where((t) => t.hasWater).toList();
-    if (_filterOnlyWomenSafe) list = list.where((t) => t.isWomenSafe).toList();
+    }
 
     final Map<String, double> localCache = {};
     for (final t in list) {
@@ -226,32 +207,21 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     }
   }
 
+  // the old "match score" blended a freshness curve (always the null
+  // floor — no toilet has `last_verified`), a Bayesian rating (always the
+  // 3.5 prior — no toilet has ratings) and an `is_open` bonus (importer
+  // default). That dressed distance up as a reliability ranking. Ordering is
+  // now purely nearest-first; the returned value is a monotonic proximity
+  // score so callers that sort descending still get nearest-first.
   double _calculateMatchScore(Toilet toilet) {
-    double dScore = 0.4;
-    if (widget.userPosition != null) {
-      final double distMeters = Geolocator.distanceBetween(
-        widget.userPosition!.latitude,
-        widget.userPosition!.longitude,
-        toilet.latitude,
-        toilet.longitude,
-      );
-      dScore = exp(-distMeters / 400.0);
-    }
-
-    final double openScore = toilet.isOpen ? 1.0 : 0.0;
-    final double bScore =
-        bayesianRating(toilet.starRating, toilet.totalRatings) / 5.0;
-    final double wScore = wilsonScore(toilet.upvoteCount, toilet.downvoteCount);
-    final double tScore = trustScore(
-      bScore * 5.0,
-      freshnessConfidence(toilet.lastVerified),
+    if (widget.userPosition == null) return 0.0;
+    final double distMeters = Geolocator.distanceBetween(
+      widget.userPosition!.latitude,
+      widget.userPosition!.longitude,
+      toilet.latitude,
+      toilet.longitude,
     );
-
-    return (0.40 * dScore) + // 40% distance proximity
-        (0.25 * tScore) + // 25% freshness & bayesian trust
-        (0.15 * openScore) + // 15% open status bonus
-        (0.15 * bScore) + // 15% bayesian rating
-        (0.05 * wScore); // 5% community upvote confidence
+    return exp(-distMeters / 400.0);
   }
 
   Widget _buildFilterChip(
@@ -299,25 +269,13 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     return "${distance.toInt()}m";
   }
 
-  // ---- Peek-sheet + browse helpers (mockup rebuild) ----
-  String? _recencyText(Toilet t) {
-    final dt = t.lastVerified;
-    if (dt == null) return null;
-    final d = DateTime.now().difference(dt);
-    if (d.inMinutes < 1) return 'checked just now';
-    if (d.inMinutes < 60) return 'checked ${d.inMinutes}m ago';
-    if (d.inHours < 24) return 'checked ${d.inHours}h ago';
-    return 'checked ${d.inDays}d ago';
-  }
-
-  String _peekMeta(Toilet t) {
-    final parts = <String>[];
-    final rec = _recencyText(t);
-    if (rec != null) parts.add(rec);
-    if (t.totalRatings > 0) parts.add('★ ${t.starRating.toStringAsFixed(1)}');
-    if (parts.isEmpty) return 'New · be the first to check in';
-    return parts.join('   ·   ');
-  }
+  // ---- Peek-sheet + browse helpers ----
+  // The map peek sheet makes NO recency or rating claim. There is no
+  // per-toilet condition data here, `last_verified` is missing on every
+  // production toilet, and the parent star_rating / total_ratings fields are
+  // frozen (Secure Contributions never writes them) so any figure would be
+  // stale. Ratings are shown honestly, aggregated on read, in the detail sheet.
+  // A derived index could restore a real peek summary in the future.
 
   void _openSearchSheet() {
     CustomHapticsService.playToggleSnap();
@@ -409,7 +367,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   Widget _buildPeekSheet(BuildContext context, Toilet t, int totalNearby) {
     final c = context.sm;
     final dist = _calculateDistanceText(t);
-    final meta = _peekMeta(t);
+    // Ratings line only; the status label is a self-expiring EvidenceStatusLabel.
+    final pt = ToiletPresentation.fromEvidence(t);
     return Container(
       decoration: BoxDecoration(
         color: c.surface,
@@ -436,7 +395,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             ),
           ),
           const SizedBox(height: SmTokens.s12),
-          const SmEyebrow('Nearest open toilet'),
+          const SmEyebrow('Nearest toilet'),
           const SizedBox(height: SmTokens.s12),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -476,10 +435,16 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                       ),
                     ),
                     const SizedBox(height: SmTokens.s4),
-                    SmStatusLabel(t.isOpen ? SmStatus.open : SmStatus.closed),
-                    if (meta.isNotEmpty) ...[
+                    // Only a CURRENT server-derived condition summary can move
+                    // this off "Status unconfirmed"; it self-expires when the
+                    // evidence window passes (no polling).
+                    EvidenceStatusLabel(t),
+                    if (pt.ratingsLabel != null) ...[
                       const SizedBox(height: SmTokens.s4),
-                      Text(meta, style: SmText.caption.copyWith(color: c.ink2)),
+                      Text(
+                        pt.ratingsLabel!,
+                        style: SmText.caption.copyWith(color: c.ink2),
+                      ),
                     ],
                   ],
                 ),
@@ -530,7 +495,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       children: [
         // 1 -- Full-bleed map
         Positioned.fill(
-          child: LooMapCanvas(
+          child: MapCanvas(
             toilets: toilets,
             selectedToilet: _selectedToilet,
             orientationEngine: _orientationEngine,
@@ -641,37 +606,9 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: SmTokens.s16),
                   children: [
-                    _buildFilterChip('Open Now', _filterOnlyOpen, (v) {
-                      setState(() {
-                        _filterOnlyOpen = v;
-                        _updateSortedToilets();
-                      });
-                    }),
-                    const SizedBox(width: SmTokens.s8),
-                    _buildFilterChip('Free', _filterOnlyFree, (v) {
-                      setState(() {
-                        _filterOnlyFree = v;
-                        _updateSortedToilets();
-                      });
-                    }),
-                    const SizedBox(width: SmTokens.s8),
-                    _buildFilterChip('Has Water', _filterOnlyWater, (v) {
+                    _buildFilterChip('Water listed', _filterOnlyWater, (v) {
                       setState(() {
                         _filterOnlyWater = v;
-                        _updateSortedToilets();
-                      });
-                    }),
-                    const SizedBox(width: SmTokens.s8),
-                    _buildFilterChip('Western', _filterOnlyWestern, (v) {
-                      setState(() {
-                        _filterOnlyWestern = v;
-                        _updateSortedToilets();
-                      });
-                    }),
-                    const SizedBox(width: SmTokens.s8),
-                    _buildFilterChip('Women Safe', _filterOnlyWomenSafe, (v) {
-                      setState(() {
-                        _filterOnlyWomenSafe = v;
                         _updateSortedToilets();
                       });
                     }),
@@ -691,24 +628,54 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             child: SmStateView.offline(),
           ),
 
-        // 4 -- Bottom peek sheet
+        // 4 -- Bottom peek sheet, with the OSM data attribution pinned just
+        // above its top edge (ODbL requires the credit be user-visible, not
+        // only documented in the repo). The badge lives in the SAME
+        // bottom-anchored slot as the sheet and above it in a Column, so it
+        // always sits just above the white card regardless of the card's
+        // content height — never drifting onto it (an earlier fixed bottom
+        // offset did exactly that once the sheet grew taller than assumed).
         if (_selectedToilet != null && toilets.isNotEmpty)
           Positioned(
             left: 0,
             right: 0,
             bottom: 0,
-            child: _buildPeekSheet(
-              context,
-              _selectedToilet!,
-              widget.toilets.length,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(
+                    left: SmTokens.s8,
+                    bottom: SmTokens.s8,
+                  ),
+                  child: OsmAttributionBadge(),
+                ),
+                _buildPeekSheet(
+                  context,
+                  _selectedToilet!,
+                  widget.toilets.length,
+                ),
+              ],
             ),
+          )
+        else
+          // No selection -> no white card. Keep the credit visible, anchored
+          // just above the bottom padding the GoogleMap reserves for Google's
+          // own logo/legal attribution, clear of the map controls.
+          Positioned(
+            left: SmTokens.s8,
+            bottom:
+                (MediaQuery.of(context).size.height < 600 ? 150.0 : 180.0) +
+                SmTokens.s8,
+            child: const OsmAttributionBadge(),
           ),
       ],
     );
   }
 }
 
-class LooMapCanvas extends StatefulWidget {
+class MapCanvas extends StatefulWidget {
   final List<Toilet> toilets;
   final Toilet? selectedToilet;
   final ValueChanged<Toilet> onToiletSelected;
@@ -719,7 +686,7 @@ class LooMapCanvas extends StatefulWidget {
   final double? searchLng;
   final void Function(String, double, double)? onSearchLocationUpdate;
 
-  const LooMapCanvas({
+  const MapCanvas({
     super.key,
     required this.toilets,
     required this.selectedToilet,
@@ -733,10 +700,10 @@ class LooMapCanvas extends StatefulWidget {
   });
 
   @override
-  State<LooMapCanvas> createState() => _LooMapCanvasState();
+  State<MapCanvas> createState() => _MapCanvasState();
 }
 
-class _LooMapCanvasState extends State<LooMapCanvas> {
+class _MapCanvasState extends State<MapCanvas> {
   OrientationEngine get _orientationEngine => widget.orientationEngine;
   GoogleMapController? _mapController;
 
@@ -764,14 +731,13 @@ class _LooMapCanvasState extends State<LooMapCanvas> {
   bool _showSearchThisArea = false;
 
   @override
-  void didUpdateWidget(covariant LooMapCanvas oldWidget) {
+  void didUpdateWidget(covariant MapCanvas oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.toilets != oldWidget.toilets) {
+      // Markers depend only on id + the moderation flag now (condition
+      // evidence no longer colours a pin), so no time-varying value in the key.
       _toiletsStateKey = widget.toilets
-          .map(
-            (t) =>
-                '${t.id}${t.isOpen}${t.starRating}${t.isFlagged}${t.isWomenSafe}${t.upvoteCount}${t.downvoteCount}',
-          )
+          .map((t) => '${t.id}${t.isFlagged}')
           .join(',');
     }
     if (widget.searchLat != oldWidget.searchLat ||
@@ -832,10 +798,7 @@ class _LooMapCanvasState extends State<LooMapCanvas> {
     super.initState();
     _visualSelectedToilet = widget.selectedToilet;
     _toiletsStateKey = widget.toilets
-        .map(
-          (t) =>
-              '${t.id}${t.isOpen}${t.starRating}${t.isFlagged}${t.isWomenSafe}${t.upvoteCount}${t.downvoteCount}',
-        )
+        .map((t) => '${t.id}${t.isFlagged}')
         .join(',');
   }
 
@@ -1004,7 +967,7 @@ class _LooMapCanvasState extends State<LooMapCanvas> {
             Marker(
               markerId: MarkerId(toilet.id),
               position: LatLng(toilet.latitude, toilet.longitude),
-              icon: _getToiletMarkerIcon(toilet, isSelected),
+              icon: toiletMarkerIcon(toilet, isSelected),
               zIndexInt: isSelected ? 2 : 1,
               consumeTapEvents: true,
               onTap: () {
@@ -1083,7 +1046,7 @@ class _LooMapCanvasState extends State<LooMapCanvas> {
           Marker(
             markerId: MarkerId(toilet.id),
             position: LatLng(toilet.latitude, toilet.longitude),
-            icon: _getToiletMarkerIcon(toilet, isSelected),
+            icon: toiletMarkerIcon(toilet, isSelected),
             zIndexInt: isSelected ? 2 : 1,
             consumeTapEvents: true,
             onTap: () {
@@ -1250,22 +1213,18 @@ class _LooMapCanvasState extends State<LooMapCanvas> {
   }
 }
 
-BitmapDescriptor _getToiletMarkerIcon(Toilet toilet, bool isSelected) {
-  if (toilet.isFlagged)
+/// A map pin does NOT encode a live open/closed state or a quality grade.
+///
+/// condition evidence NO LONGER colours the pin. A one-account
+/// majority ("1 check says closed") is honest as TEXT ("Recent checks: closed"
+/// in the peek / list / detail), but a red map pin is a far stronger map-level
+/// assertion and one account must not control it. Evidence-strength → visual
+/// authority is GO's decision. In the current design every
+/// mapped toilet is a NEUTRAL pin; it turns red only for an explicit, still-
+/// valid moderation flag. No green "verified/open" treatment anywhere.
+BitmapDescriptor toiletMarkerIcon(Toilet toilet, bool isSelected) {
+  if (toilet.isFlagged) {
     return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed);
-  if (toilet.downvoteCount > 5 && toilet.communityScore < 0.3)
-    return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed);
-  double hue;
-  if (!toilet.isOpen) {
-    hue = BitmapDescriptor.hueRed; // Closed: red
-  } else if (toilet.starRating == 0.0 || toilet.totalRatings == 0) {
-    hue = BitmapDescriptor.hueAzure; // Unrated: azure
-  } else if (toilet.starRating >= 3.5) {
-    hue = BitmapDescriptor.hueGreen; // Clean: brand green
-  } else if (toilet.starRating >= 2.0) {
-    hue = BitmapDescriptor.hueYellow; // Average: amber/yellow
-  } else {
-    hue = BitmapDescriptor.hueOrange; // Poor: orange-red
   }
-  return BitmapDescriptor.defaultMarkerWithHue(hue);
+  return BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure);
 }

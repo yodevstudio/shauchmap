@@ -6,12 +6,15 @@ import 'package:collection/collection.dart';
 import 'detail_sheet.dart';
 import 'add_toilet_wizard.dart';
 import '../services/firestore_service.dart';
+import '../config/rollout_config.dart';
 import '../services/custom_haptics_service.dart';
 import '../main.dart' show showAppSnackBar;
 import 'settings_screen.dart';
 import '../theme/sm_tokens.dart';
 import '../theme/sm_theme.dart';
 import '../theme/sm_widgets.dart';
+import '../field_audit/field_audit_config.dart';
+import '../field_audit/field_audit_list_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final FirestoreService firestoreService;
@@ -42,7 +45,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         backgroundColor: ctx.sm.surface,
         title: Text('Delete Account?', style: TextStyle(color: ctx.sm.ink)),
         content: Text(
-          'This permanently deletes your account, scout points, badges, and profile. Your toilet additions and ratings remain to help the community.\n\nThis cannot be undone.',
+          'This deletes your account, private profile, saved toilets, badges '
+          'and public leaderboard profile.\n\n'
+          'Some sanitation contributions you made — toilets added, ratings, '
+          'condition checks, check-ins, reports and votes — may be retained '
+          '(some public, some private) as community data. Your profile name '
+          'and email are removed, but technical identifiers derived from your '
+          'account may remain in retained records; they are not fully '
+          'anonymised.\n\nThis cannot be undone.',
           style: TextStyle(color: ctx.sm.ink2, height: 1.5),
         ),
         actions: [
@@ -73,9 +83,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (user == null) return;
       await user.reauthenticateWithCredential(credential);
 
-      // Step 3: Delete Firestore user document
+      // Step 3: Delete the private profile doc and the public leaderboard row
+      // ATOMICALLY. A WriteBatch means one deletion cannot silently succeed
+      // while the other is left behind. Failure here aborts before the Auth
+      // deletion (Step 4) and surfaces to the user — it is NOT swallowed.
       final userId = user.uid;
-      await FirebaseFirestore.instance.collection('users').doc(userId).delete();
+      final db = FirebaseFirestore.instance;
+      final batch = db.batch();
+      batch.delete(db.collection('users').doc(userId));
+      batch.delete(db.collection('public_profiles').doc(userId));
+      await batch.commit();
+
+      // Best-effort: the private per-user cosmetic counters (a subcollection,
+      // not auto-deleted with the parent). They are unreadable once the uid is
+      // gone; a Cloud Function would scrub them properly. Failure here does not
+      // block account deletion.
+      try {
+        final wardens = await db
+            .collection('users')
+            .doc(userId)
+            .collection('toilet_wardens')
+            .get();
+        for (final d in wardens.docs) {
+          await d.reference.delete();
+        }
+      } catch (_) {}
 
       // Step 4: Delete Firebase Auth user
       await user.delete();
@@ -120,6 +152,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return ((xp - 1000) % 1000) / 1000.0; // Infinite tiers
   }
 
+  // Internal Field Audit Mode entry point. Compiled in every build but only
+  // rendered when built with --dart-define=FIELD_AUDIT_MODE=true. Does not
+  // require sign-in and never touches production Firestore.
+  Widget _fieldAuditEntry(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: () => Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const FieldAuditListScreen())),
+      icon: const Icon(Icons.fact_check_outlined),
+      label: const Text('Field Audit Mode (internal)'),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = context.sm;
@@ -153,6 +198,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   widget.onSignInRequest();
                 },
               ),
+              if (FieldAuditConfig.enabled) ...[
+                const SizedBox(height: SmTokens.s16),
+                _fieldAuditEntry(context),
+              ],
             ],
           ),
         ),
@@ -193,6 +242,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             final List<dynamic> badges = userData['badges'] ?? [];
 
             void openAddWizard() {
+              // the SAME rollout gate as main._startAddToiletFlow.
+              // Both consumer entry points ("Add your first toilet" and the
+              // dashed "+ Add a toilet" button) route through here.
+              if (!RolloutConfig.addToiletEnabled) {
+                showAppSnackBar(RolloutConfig.addToiletPausedMessage);
+                return;
+              }
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => AddToiletWizard(
@@ -463,12 +519,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   const SizedBox(height: SmTokens.s24),
 
-                  // 5 — This week's top scouts
-                  const SmEyebrow("THIS WEEK'S TOP SCOUTS"),
+                  // 5 — Top scouts. Reads the world-readable public_profiles
+                  // collection (name / photo_url / scout_points only) — NOT the
+                  // private /users docs. scout_points is client-authored, so
+                  // this is a self-reported cosmetic ranking, not a trusted one.
+                  const SmEyebrow("TOP SCOUTS"),
                   const SizedBox(height: SmTokens.s12),
                   StreamBuilder<QuerySnapshot>(
                     stream: FirebaseFirestore.instance
-                        .collection('users')
+                        .collection('public_profiles')
                         .orderBy('scout_points', descending: true)
                         .limit(5)
                         .snapshots(),
@@ -718,14 +777,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           final data =
                               doc.data() as Map<String, dynamic>? ?? {};
                           final String name = data['name'] ?? '';
-                          final String category = data['category'] ?? 'govt';
-                          final double rating =
-                              (data['star_rating'] as num?)?.toDouble() ?? 0.0;
-
-                          String catLabel = "Government";
-                          if (category == "mall") catLabel = "Mall";
-                          if (category == "petrol") catLabel = "Petrol Pump";
-                          if (category == "other") catLabel = "Other";
+                          // Classification via the identity-truth layer, never
+                          // the raw `category` string (base OSM = hard-coded
+                          // 'govt'). Unknown => "Mapped toilet".
+                          final String catLabel = ToiletPresentation.fromToilet(
+                            toiletFromFirestore(doc),
+                          ).contextLabel;
 
                           return SmCard(
                             onTap: () {
@@ -782,17 +839,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   ),
                                 ),
                                 const SizedBox(width: SmTokens.s8),
-                                Row(
-                                  children: [
-                                    Icon(Icons.star, color: c.star, size: 16.0),
-                                    const SizedBox(width: SmTokens.s4),
-                                    Text(
-                                      rating.toStringAsFixed(1),
-                                      style: SmText.bodyStrong.copyWith(
-                                        color: c.ink,
-                                      ),
-                                    ),
-                                  ],
+                                Icon(
+                                  Icons.chevron_right,
+                                  color: c.ink3,
+                                  size: 20.0,
                                 ),
                               ],
                             ),
@@ -937,6 +987,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       style: SmText.caption.copyWith(color: c.statusClosed),
                     ),
                   ),
+                  if (FieldAuditConfig.enabled) ...[
+                    const SizedBox(height: 12.0),
+                    _fieldAuditEntry(context),
+                  ],
                   const SizedBox(height: 24.0),
                   _DevEasterEgg(),
                   const SizedBox(height: 16.0),

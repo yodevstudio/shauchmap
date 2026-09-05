@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="ShauchMap">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#20a06a"/>
+      <stop offset="1" stop-color="#0c6f4c"/>
+    </linearGradient>
+    <linearGradient id="w" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#e6f1ec"/>
+    </linearGradient>
+  </defs>
+  <rect x="16" y="16" width="992" height="992" rx="216" fill="url(#g)"/>
+  <path fill="url(#w)" d="M512 236c-110 0-199 89-199 199 0 140 175 320 191 336a11 11 0 0 0 16 0c16-16 191-196 191-336 0-110-89-199-199-199z"/>
+  <circle cx="512" cy="435" r="118" fill="url(#g)"/>
+  <path d="M455 437l40 40 78-84" fill="none" stroke="#ffffff" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

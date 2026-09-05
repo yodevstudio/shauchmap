@@ -1,0 +1,11 @@
+{
+  "name": "shauchmap-rules-test",
+  "private": true,
+  "type": "module",
+  "description": "Firestore security-rules ALLOW/DENY matrix against the repo-root firestore.rules.",
+  "scripts": {
+    "test": "node sync-rules.mjs && npx firebase-tools emulators:exec --only firestore --project demo-shauchmap \"node rules_test.mjs\""
+  },
+  "dependencies": { "@firebase/rules-unit-testing": "^4.0.1", "firebase": "^11.0.0" },
+  "devDependencies": { "firebase-tools": "15.29.0" }
+}

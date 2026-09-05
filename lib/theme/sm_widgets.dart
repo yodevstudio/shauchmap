@@ -301,15 +301,23 @@ class SmEyebrow extends StatelessWidget {
 
 /// One amenity row. true = Yes (teal), false = No (MUTED grey, never red),
 /// null = Not sure (amber). Word always shown — never hidden (accessibility).
+///
+/// [valueText] overrides the Yes/No/Not-sure word for the Presentation Truth
+/// layer : pass 'Listed' for a source-reported amenity (neutral tone —
+/// NOT "verified now") or 'Unknown' when we genuinely cannot say. When
+/// [valueText] is set, [value] is ignored for the label but still picks the
+/// tone unless it is null.
 class SmAmenityValue extends StatelessWidget {
   final String label;
   final IconData icon;
   final bool? value;
+  final String? valueText;
   const SmAmenityValue({
     super.key,
     required this.label,
     required this.icon,
     required this.value,
+    this.valueText,
   });
 
   @override
@@ -318,7 +326,12 @@ class SmAmenityValue extends StatelessWidget {
     final Color bg;
     final Color fg;
     final String t;
-    if (value == true) {
+    if (valueText != null) {
+      final bool listed = valueText!.toLowerCase() == 'listed';
+      bg = listed ? c.soft : c.statusUnsure.withValues(alpha: 0.16);
+      fg = listed ? c.ink2 : c.statusUnsure;
+      t = valueText!;
+    } else if (value == true) {
       bg = c.statusOpen.withValues(alpha: 0.14);
       fg = c.statusOpen;
       t = 'Yes';

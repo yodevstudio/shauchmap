@@ -7,34 +7,34 @@
 <style>
   body { font-family: -apple-system, sans-serif; max-width: 800px;
          margin: 40px auto; padding: 20px; color: #333; line-height: 1.6; }
-  h1 { color: #1D9E75; }
+  h1 { color: #11A06F; }
   h2 { margin-top: 30px; }
 </style>
 </head>
 <body>
 <h1>ShauchMap Privacy Policy</h1>
-<p>Last updated: June 2026</p>
+<p>Last updated: September 2026. This page mirrors <a href="https://github.com/YoDevStudio/ShauchMap/blob/main/PRIVACY.md">PRIVACY.md</a> in the repository, which is the source of truth if the two ever drift.</p>
 
-<h2>What we collect</h2>
-<p><strong>Location:</strong> Precise location is used only to find 
-toilets near you. Never stored on our servers or shared.</p>
-<p><strong>Google Account:</strong> Name and email collected when you 
-sign in, to track your contributions (ratings, toilets added).</p>
-<p><strong>Crash data:</strong> Anonymous crash reports via Firebase 
-Crashlytics to improve stability.</p>
-
-<h2>What we do not do</h2>
+<h2>Android app</h2>
+<p><strong>Location:</strong> ShauchMap uses your current location to find toilets near you and to derive the query bounds sent to Cloud Firestore. We do not maintain our own database of your location history. Google Maps and other OS/platform location or navigation services may separately process location under their own policies when you use features that hand off to them (for example, tapping "Navigate").</p>
+<p><strong>Google Account:</strong> Name and email collected when you sign in, to attribute your contributions (ratings, check-ins, condition checks, reports, and any toilets added under the account-attribution model).</p>
+<p><strong>Diagnostic data:</strong> Crash information is collected via Firebase Crashlytics to help fix stability problems. We don't independently control or audit everything Crashlytics itself collects, so we avoid calling this "anonymous" as a blanket claim. We do not use Firebase Analytics.</p>
 <ul>
 <li>We do not sell your data</li>
 <li>We do not show ads</li>
 <li>We do not track you outside the app</li>
-<li>We do not store your location history</li>
 </ul>
 
-<h2>Account deletion</h2>
-<p>Open ShauchMap app → Me tab → scroll down → tap 
-<strong>Delete Account</strong>. This permanently deletes your profile, 
-scout points, badges, and all associated data from our servers.</p>
+<h2>Account deletion (Android)</h2>
+<p>Open ShauchMap &rarr; You tab &rarr; scroll down &rarr; tap <strong>Delete Account</strong>. This removes your account, private profile, scout points, badges, saved toilets and public leaderboard entry.</p>
+<p>Some sanitation contribution records you created — toilets added, ratings, condition checks, check-ins, reports and votes — may be <strong>retained</strong> (some publicly visible, some stored privately) so the map stays useful for others. Your profile name and email are removed, but an internal record identifier derived from your former account may remain on those records. We do not currently claim, and you should not assume, that retained contributions are fully anonymised.</p>
+
+<h2>ShauchMap Instant (web)</h2>
+<p>Instant has no account, is read-only (no ratings, check-ins, or Add-Toilet path), and uses no analytics or tracking of any kind.</p>
+<p>With your permission, your browser reports your current coordinates. Instant uses that position on your device to derive a nearby search area, and sends that <strong>derived query range</strong> to Firestore to retrieve candidate toilets. ShauchMap does not intentionally persist an Instant location history or write your current coordinates to its application database — infrastructure providers may maintain their own operational logs under their own policies (see "What we don't claim" below). We do not claim your location "never leaves the browser" — the derived query range does leave it, because that's how the lookup works.</p>
+
+<h2>What we don't claim</h2>
+<p>Firebase Hosting, Cloud Firestore, and Google's network sit underneath both surfaces and may keep their own standard operational logs at a level we don't control. This page describes what ShauchMap itself collects and does with your data.</p>
 
 <h2>Contact</h2>
 <p>Questions: yogendra.yoji@gmail.com</p>

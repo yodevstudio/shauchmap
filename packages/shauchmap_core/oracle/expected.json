@@ -1,0 +1,2565 @@
+{
+  "truth": [
+    {
+      "name": "T01 OSM sourceMapped, no tags",
+      "out": {
+        "schemaVersion": 1,
+        "source": "osm",
+        "recordedAtMs": null,
+        "context": "unknown",
+        "gender": "unknown",
+        "identityStatus": "sourceMapped",
+        "fee": "unknown",
+        "isNativeV2": false,
+        "isCandidate": false,
+        "amenities": {
+          "water": "unknown",
+          "soap": "unknown",
+          "lock": "unknown",
+          "western": "unknown",
+          "wheelchair": "unknown",
+          "babyChange": "unknown",
+          "sanitaryDisposal": "unknown"
+        }
+      }
+    },
+    {
+      "name": "T02 OSM sourceMapped, explicit female + wheelchair + water tags",
+      "out": {
+        "schemaVersion": 1,
+        "source": "osm",
+        "recordedAtMs": null,
+        "context": "unknown",
+        "gender": "women",
+        "identityStatus": "sourceMapped",
+        "fee": "unknown",
+        "isNativeV2": false,
+        "isCandidate": false,
+        "amenities": {
+          "water": "present",
+          "soap": "unknown",
+          "lock": "unknown",
+          "western": "unknown",
+          "wheelchair": "present",
+          "babyChange": "present",
+          "sanitaryDisposal": "unknown"
+        }
+      }
+    },
+    {
+      "name": "T03 OSM inferred candidate (needs_confirm) — positives downgraded",
+      "out": {
+        "schemaVersion": 1,
+        "source": "osm",
+        "recordedAtMs": null,
+        "context": "petrolStation",
+        "gender": "men",
+        "identityStatus": "candidate",
+        "fee": "unknown",
+        "isNativeV2": false,
+        "isCandidate": true,
+        "amenities": {
+          "water": "unknown",
+          "soap": "unknown",
+          "lock": "unknown",
+          "western": "unknown",
+          "wheelchair": "unknown",
+          "babyChange": "unknown",
+          "sanitaryDisposal": "unknown"
+        }
+      }
+    },
+    {
+      "name": "T04 legacy community wizard (added_by present, not osm_)",
+      "out": {
+        "schemaVersion": 1,
+        "source": "legacyCommunity",
+        "recordedAtMs": 1749133523664,
+        "context": "publicToilet",
+        "gender": "men",
+        "identityStatus": "communitySubmitted",
+        "fee": "unknown",
+        "isNativeV2": false,
+        "isCandidate": false,
+        "amenities": {
+          "water": "unknown",
+          "soap": "unknown",
+          "lock": "unknown",
+          "western": "present",
+          "wheelchair": "unknown",
+          "babyChange": "unknown",
+          "sanitaryDisposal": "present"
+        }
+      }
+    },
+    {
+      "name": "T05 unknown provenance (empty added_by)",
+      "out": {
+        "schemaVersion": 1,
+        "source": "unknown",
+        "recordedAtMs": null,
+        "context": "unknown",
+        "gender": "unknown",
+        "identityStatus": "unknown",
+        "fee": "unknown",
+        "isNativeV2": false,
+        "isCandidate": false,
+        "amenities": {
+          "water": "unknown",
+          "soap": "unknown",
+          "lock": "unknown",
+          "western": "unknown",
+          "wheelchair": "unknown",
+          "babyChange": "unknown",
+          "sanitaryDisposal": "unknown"
+        }
+      }
+    },
+    {
+      "name": "T06 native truth_v2 — fully valid",
+      "out": {
+        "schemaVersion": 2,
+        "source": "communitySubmission",
+        "recordedAtMs": 1788300000000,
+        "context": "petrolStation",
+        "gender": "women",
+        "identityStatus": "communitySubmitted",
+        "fee": "paid",
+        "isNativeV2": true,
+        "isCandidate": false,
+        "amenities": {
+          "water": "present",
+          "soap": "absent",
+          "lock": "present",
+          "western": "unknown",
+          "wheelchair": "absent",
+          "babyChange": "unknown",
+          "sanitaryDisposal": "present"
+        }
+      }
+    },
+    {
+      "name": "T07 native truth_v2 — MALFORMED (missing 'gender' key) -> falls back to legacy community adapter",
+      "out": {
+        "schemaVersion": 1,
+        "source": "legacyCommunity",
+        "recordedAtMs": null,
+        "context": "unknown",
+        "gender": "unknown",
+        "identityStatus": "communitySubmitted",
+        "fee": "unknown",
+        "isNativeV2": false,
+        "isCandidate": false,
+        "amenities": {
+          "water": "unknown",
+          "soap": "unknown",
+          "lock": "unknown",
+          "western": "unknown",
+          "wheelchair": "unknown",
+          "babyChange": "unknown",
+          "sanitaryDisposal": "unknown"
+        }
+      }
+    },
+    {
+      "name": "T08 native truth_v2 — MALFORMED (bad amenity enum) -> legacy fallback",
+      "out": {
+        "schemaVersion": 1,
+        "source": "legacyCommunity",
+        "recordedAtMs": null,
+        "context": "unknown",
+        "gender": "unknown",
+        "identityStatus": "communitySubmitted",
+        "fee": "unknown",
+        "isNativeV2": false,
+        "isCandidate": false,
+        "amenities": {
+          "water": "unknown",
+          "soap": "unknown",
+          "lock": "unknown",
+          "western": "unknown",
+          "wheelchair": "unknown",
+          "babyChange": "unknown",
+          "sanitaryDisposal": "unknown"
+        }
+      }
+    },
+    {
+      "name": "T09 native truth_v2 — MALFORMED (recorded_at not a timestamp) -> legacy fallback",
+      "out": {
+        "schemaVersion": 1,
+        "source": "legacyCommunity",
+        "recordedAtMs": null,
+        "context": "unknown",
+        "gender": "unknown",
+        "identityStatus": "communitySubmitted",
+        "fee": "unknown",
+        "isNativeV2": false,
+        "isCandidate": false,
+        "amenities": {
+          "water": "unknown",
+          "soap": "unknown",
+          "lock": "unknown",
+          "western": "unknown",
+          "wheelchair": "unknown",
+          "babyChange": "unknown",
+          "sanitaryDisposal": "unknown"
+        }
+      }
+    },
+    {
+      "name": "T10 OSM, gender absent -> UNKNOWN (not unisex); fee always UNKNOWN",
+      "out": {
+        "schemaVersion": 1,
+        "source": "osm",
+        "recordedAtMs": null,
+        "context": "unknown",
+        "gender": "unknown",
+        "identityStatus": "sourceMapped",
+        "fee": "unknown",
+        "isNativeV2": false,
+        "isCandidate": false,
+        "amenities": {
+          "water": "unknown",
+          "soap": "unknown",
+          "lock": "unknown",
+          "western": "unknown",
+          "wheelchair": "unknown",
+          "babyChange": "unknown",
+          "sanitaryDisposal": "unknown"
+        }
+      }
+    }
+  ],
+  "evidence": [
+    {
+      "name": "E01 no evidence_v2 at all",
+      "out": {
+        "present": false,
+        "version": 0,
+        "ratings": {
+          "available": false,
+          "count": 0,
+          "average": null,
+          "isIndexedZero": false
+        },
+        "votes": {
+          "available": false,
+          "up": 0,
+          "down": 0,
+          "isIndexedZero": false
+        },
+        "condition": {
+          "available": false,
+          "open": "unknown",
+          "water": "unknown",
+          "usable": "unknown",
+          "lock": "unknown",
+          "contributorCount": 0,
+          "latestAtMs": null,
+          "validUntilMs": null,
+          "isCurrentlyValid": false,
+          "ageMinutes": null,
+          "supportOpen": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportWater": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportUsable": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportLock": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "E02 wrong version",
+      "out": {
+        "present": false,
+        "version": 0,
+        "ratings": {
+          "available": false,
+          "count": 0,
+          "average": null,
+          "isIndexedZero": false
+        },
+        "votes": {
+          "available": false,
+          "up": 0,
+          "down": 0,
+          "isIndexedZero": false
+        },
+        "condition": {
+          "available": false,
+          "open": "unknown",
+          "water": "unknown",
+          "usable": "unknown",
+          "lock": "unknown",
+          "contributorCount": 0,
+          "latestAtMs": null,
+          "validUntilMs": null,
+          "isCurrentlyValid": false,
+          "ageMinutes": null,
+          "supportOpen": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportWater": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportUsable": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportLock": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "E03 ratings indexed, count 4 avg 3.5",
+      "out": {
+        "present": true,
+        "version": 1,
+        "ratings": {
+          "available": true,
+          "count": 4,
+          "average": 3.5,
+          "isIndexedZero": false
+        },
+        "votes": {
+          "available": false,
+          "up": 0,
+          "down": 0,
+          "isIndexedZero": false
+        },
+        "condition": {
+          "available": false,
+          "open": "unknown",
+          "water": "unknown",
+          "usable": "unknown",
+          "lock": "unknown",
+          "contributorCount": 0,
+          "latestAtMs": null,
+          "validUntilMs": null,
+          "isCurrentlyValid": false,
+          "ageMinutes": null,
+          "supportOpen": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportWater": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportUsable": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportLock": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "E04 ratings indexed ZERO (count 0, no average)",
+      "out": {
+        "present": true,
+        "version": 1,
+        "ratings": {
+          "available": true,
+          "count": 0,
+          "average": null,
+          "isIndexedZero": true
+        },
+        "votes": {
+          "available": false,
+          "up": 0,
+          "down": 0,
+          "isIndexedZero": false
+        },
+        "condition": {
+          "available": false,
+          "open": "unknown",
+          "water": "unknown",
+          "usable": "unknown",
+          "lock": "unknown",
+          "contributorCount": 0,
+          "latestAtMs": null,
+          "validUntilMs": null,
+          "isCurrentlyValid": false,
+          "ageMinutes": null,
+          "supportOpen": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportWater": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportUsable": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportLock": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "E05 ratings MALFORMED (count 0 but has average) -> unavailable",
+      "out": {
+        "present": true,
+        "version": 1,
+        "ratings": {
+          "available": false,
+          "count": 0,
+          "average": null,
+          "isIndexedZero": false
+        },
+        "votes": {
+          "available": false,
+          "up": 0,
+          "down": 0,
+          "isIndexedZero": false
+        },
+        "condition": {
+          "available": false,
+          "open": "unknown",
+          "water": "unknown",
+          "usable": "unknown",
+          "lock": "unknown",
+          "contributorCount": 0,
+          "latestAtMs": null,
+          "validUntilMs": null,
+          "isCurrentlyValid": false,
+          "ageMinutes": null,
+          "supportOpen": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportWater": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportUsable": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportLock": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "E06 votes indexed up 5 down 2",
+      "out": {
+        "present": true,
+        "version": 1,
+        "ratings": {
+          "available": false,
+          "count": 0,
+          "average": null,
+          "isIndexedZero": false
+        },
+        "votes": {
+          "available": true,
+          "up": 5,
+          "down": 2,
+          "isIndexedZero": false
+        },
+        "condition": {
+          "available": false,
+          "open": "unknown",
+          "water": "unknown",
+          "usable": "unknown",
+          "lock": "unknown",
+          "contributorCount": 0,
+          "latestAtMs": null,
+          "validUntilMs": null,
+          "isCurrentlyValid": false,
+          "ageMinutes": null,
+          "supportOpen": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportWater": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportUsable": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportLock": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "E07 condition VALID single-clear usable (1 yes 3 unknown), fresh",
+      "out": {
+        "present": true,
+        "version": 1,
+        "ratings": {
+          "available": false,
+          "count": 0,
+          "average": null,
+          "isIndexedZero": false
+        },
+        "votes": {
+          "available": false,
+          "up": 0,
+          "down": 0,
+          "isIndexedZero": false
+        },
+        "condition": {
+          "available": true,
+          "open": "unknown",
+          "water": "unknown",
+          "usable": "yes",
+          "lock": "unknown",
+          "contributorCount": 4,
+          "latestAtMs": 1788393000000,
+          "validUntilMs": 1788396600000,
+          "isCurrentlyValid": true,
+          "ageMinutes": 10,
+          "supportOpen": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 4
+          },
+          "supportWater": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 4
+          },
+          "supportUsable": {
+            "yes": 1,
+            "no": 0,
+            "unknown": 3
+          },
+          "supportLock": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 4
+          }
+        }
+      }
+    },
+    {
+      "name": "E08 condition VALID corroborated-clear usable (3 yes 0 no), fresh",
+      "out": {
+        "present": true,
+        "version": 1,
+        "ratings": {
+          "available": false,
+          "count": 0,
+          "average": null,
+          "isIndexedZero": false
+        },
+        "votes": {
+          "available": false,
+          "up": 0,
+          "down": 0,
+          "isIndexedZero": false
+        },
+        "condition": {
+          "available": true,
+          "open": "yes",
+          "water": "unknown",
+          "usable": "yes",
+          "lock": "unknown",
+          "contributorCount": 3,
+          "latestAtMs": 1788393000000,
+          "validUntilMs": 1788396600000,
+          "isCurrentlyValid": true,
+          "ageMinutes": 10,
+          "supportOpen": {
+            "yes": 3,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportWater": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 3
+          },
+          "supportUsable": {
+            "yes": 3,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportLock": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 3
+          }
+        }
+      }
+    },
+    {
+      "name": "E09 condition EXPIRED (valid_until in the past) -> isCurrentlyValid false",
+      "out": {
+        "present": true,
+        "version": 1,
+        "ratings": {
+          "available": false,
+          "count": 0,
+          "average": null,
+          "isIndexedZero": false
+        },
+        "votes": {
+          "available": false,
+          "up": 0,
+          "down": 0,
+          "isIndexedZero": false
+        },
+        "condition": {
+          "available": true,
+          "open": "yes",
+          "water": "unknown",
+          "usable": "yes",
+          "lock": "unknown",
+          "contributorCount": 3,
+          "latestAtMs": 1788389000000,
+          "validUntilMs": 1788392600000,
+          "isCurrentlyValid": false,
+          "ageMinutes": 76,
+          "supportOpen": {
+            "yes": 3,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportWater": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 3
+          },
+          "supportUsable": {
+            "yes": 3,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportLock": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 3
+          }
+        }
+      }
+    },
+    {
+      "name": "E10 condition MALFORMED (support.usable sums != contributor_count) -> unavailable",
+      "out": {
+        "present": true,
+        "version": 1,
+        "ratings": {
+          "available": false,
+          "count": 0,
+          "average": null,
+          "isIndexedZero": false
+        },
+        "votes": {
+          "available": false,
+          "up": 0,
+          "down": 0,
+          "isIndexedZero": false
+        },
+        "condition": {
+          "available": false,
+          "open": "unknown",
+          "water": "unknown",
+          "usable": "unknown",
+          "lock": "unknown",
+          "contributorCount": 0,
+          "latestAtMs": null,
+          "validUntilMs": null,
+          "isCurrentlyValid": false,
+          "ageMinutes": null,
+          "supportOpen": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportWater": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportUsable": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportLock": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "E11 condition MALFORMED (verdict 'yes' contradicts support {yes:1,no:2}) -> unavailable",
+      "out": {
+        "present": true,
+        "version": 1,
+        "ratings": {
+          "available": false,
+          "count": 0,
+          "average": null,
+          "isIndexedZero": false
+        },
+        "votes": {
+          "available": false,
+          "up": 0,
+          "down": 0,
+          "isIndexedZero": false
+        },
+        "condition": {
+          "available": false,
+          "open": "unknown",
+          "water": "unknown",
+          "usable": "unknown",
+          "lock": "unknown",
+          "contributorCount": 0,
+          "latestAtMs": null,
+          "validUntilMs": null,
+          "isCurrentlyValid": false,
+          "ageMinutes": null,
+          "supportOpen": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportWater": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportUsable": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportLock": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "E12 condition VALID tied usable (2 yes 2 no) -> verdict unknown",
+      "out": {
+        "present": true,
+        "version": 1,
+        "ratings": {
+          "available": false,
+          "count": 0,
+          "average": null,
+          "isIndexedZero": false
+        },
+        "votes": {
+          "available": false,
+          "up": 0,
+          "down": 0,
+          "isIndexedZero": false
+        },
+        "condition": {
+          "available": true,
+          "open": "unknown",
+          "water": "unknown",
+          "usable": "unknown",
+          "lock": "unknown",
+          "contributorCount": 4,
+          "latestAtMs": 1788393000000,
+          "validUntilMs": 1788396600000,
+          "isCurrentlyValid": true,
+          "ageMinutes": 10,
+          "supportOpen": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 4
+          },
+          "supportWater": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 4
+          },
+          "supportUsable": {
+            "yes": 2,
+            "no": 2,
+            "unknown": 0
+          },
+          "supportLock": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 4
+          }
+        }
+      }
+    },
+    {
+      "name": "E13 condition VALID conflicted-majority NO usable (1 yes 2 no) + water reported out",
+      "out": {
+        "present": true,
+        "version": 1,
+        "ratings": {
+          "available": false,
+          "count": 0,
+          "average": null,
+          "isIndexedZero": false
+        },
+        "votes": {
+          "available": false,
+          "up": 0,
+          "down": 0,
+          "isIndexedZero": false
+        },
+        "condition": {
+          "available": true,
+          "open": "unknown",
+          "water": "no",
+          "usable": "no",
+          "lock": "unknown",
+          "contributorCount": 3,
+          "latestAtMs": 1788393000000,
+          "validUntilMs": 1788396600000,
+          "isCurrentlyValid": true,
+          "ageMinutes": 10,
+          "supportOpen": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 3
+          },
+          "supportWater": {
+            "yes": 0,
+            "no": 3,
+            "unknown": 0
+          },
+          "supportUsable": {
+            "yes": 1,
+            "no": 2,
+            "unknown": 0
+          },
+          "supportLock": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 3
+          }
+        }
+      }
+    },
+    {
+      "name": "E14 condition zero contributors (cc 0, all unknown, no timestamps) -> available but not valid",
+      "out": {
+        "present": true,
+        "version": 1,
+        "ratings": {
+          "available": false,
+          "count": 0,
+          "average": null,
+          "isIndexedZero": false
+        },
+        "votes": {
+          "available": false,
+          "up": 0,
+          "down": 0,
+          "isIndexedZero": false
+        },
+        "condition": {
+          "available": true,
+          "open": "unknown",
+          "water": "unknown",
+          "usable": "unknown",
+          "lock": "unknown",
+          "contributorCount": 0,
+          "latestAtMs": null,
+          "validUntilMs": null,
+          "isCurrentlyValid": false,
+          "ageMinutes": null,
+          "supportOpen": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportWater": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportUsable": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportLock": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "E15 all three sections present + valid (ratings 4/3.5, votes 5/2, condition corr-usable)",
+      "out": {
+        "present": true,
+        "version": 1,
+        "ratings": {
+          "available": true,
+          "count": 4,
+          "average": 3.5,
+          "isIndexedZero": false
+        },
+        "votes": {
+          "available": true,
+          "up": 5,
+          "down": 2,
+          "isIndexedZero": false
+        },
+        "condition": {
+          "available": true,
+          "open": "yes",
+          "water": "unknown",
+          "usable": "yes",
+          "lock": "no",
+          "contributorCount": 2,
+          "latestAtMs": 1788393000000,
+          "validUntilMs": 1788396600000,
+          "isCurrentlyValid": true,
+          "ageMinutes": 10,
+          "supportOpen": {
+            "yes": 2,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportWater": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 2
+          },
+          "supportUsable": {
+            "yes": 2,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportLock": {
+            "yes": 0,
+            "no": 2,
+            "unknown": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "BND-E1 condition valid_until == now exactly -> EXPIRED (isCurrentlyValid false)",
+      "out": {
+        "present": true,
+        "version": 1,
+        "ratings": {
+          "available": false,
+          "count": 0,
+          "average": null,
+          "isIndexedZero": false
+        },
+        "votes": {
+          "available": false,
+          "up": 0,
+          "down": 0,
+          "isIndexedZero": false
+        },
+        "condition": {
+          "available": true,
+          "open": "yes",
+          "water": "unknown",
+          "usable": "yes",
+          "lock": "unknown",
+          "contributorCount": 3,
+          "latestAtMs": 1788393000000,
+          "validUntilMs": 1788393600000,
+          "isCurrentlyValid": false,
+          "ageMinutes": 10,
+          "supportOpen": {
+            "yes": 3,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportWater": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 3
+          },
+          "supportUsable": {
+            "yes": 3,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportLock": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 3
+          }
+        }
+      }
+    },
+    {
+      "name": "BND-E2 condition valid_until == now + 1 ms -> still valid",
+      "out": {
+        "present": true,
+        "version": 1,
+        "ratings": {
+          "available": false,
+          "count": 0,
+          "average": null,
+          "isIndexedZero": false
+        },
+        "votes": {
+          "available": false,
+          "up": 0,
+          "down": 0,
+          "isIndexedZero": false
+        },
+        "condition": {
+          "available": true,
+          "open": "yes",
+          "water": "unknown",
+          "usable": "yes",
+          "lock": "unknown",
+          "contributorCount": 3,
+          "latestAtMs": 1788393000000,
+          "validUntilMs": 1788393600001,
+          "isCurrentlyValid": true,
+          "ageMinutes": 10,
+          "supportOpen": {
+            "yes": 3,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportWater": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 3
+          },
+          "supportUsable": {
+            "yes": 3,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportLock": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 3
+          }
+        }
+      }
+    },
+    {
+      "name": "BND-E3 condition latest_at in the FUTURE -> parses; ageMinutes clamps to 0",
+      "out": {
+        "present": true,
+        "version": 1,
+        "ratings": {
+          "available": false,
+          "count": 0,
+          "average": null,
+          "isIndexedZero": false
+        },
+        "votes": {
+          "available": false,
+          "up": 0,
+          "down": 0,
+          "isIndexedZero": false
+        },
+        "condition": {
+          "available": true,
+          "open": "yes",
+          "water": "unknown",
+          "usable": "yes",
+          "lock": "unknown",
+          "contributorCount": 3,
+          "latestAtMs": 1788394200000,
+          "validUntilMs": 1788397200000,
+          "isCurrentlyValid": true,
+          "ageMinutes": 0,
+          "supportOpen": {
+            "yes": 3,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportWater": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 3
+          },
+          "supportUsable": {
+            "yes": 3,
+            "no": 0,
+            "unknown": 0
+          },
+          "supportLock": {
+            "yes": 0,
+            "no": 0,
+            "unknown": 3
+          }
+        }
+      }
+    }
+  ],
+  "go": [
+    {
+      "name": "G01 empty pool -> noToilets",
+      "out": {
+        "selectedId": null,
+        "selectedDistanceMeters": null,
+        "reason": "noToilets",
+        "requiresConfirmation": false,
+        "cautions": [],
+        "alternatives": [],
+        "baselineNearestId": null,
+        "baselineNearestDistanceMeters": null,
+        "presentation": {
+          "headline": "No GO suggestion",
+          "explanation": "ShauchMap can't produce a nearby GO suggestion from the currently available pool.",
+          "navigationAllowed": false,
+          "requiresConfirmation": false,
+          "primaryCta": null,
+          "secondaryCta": "Retry",
+          "cautions": [],
+          "tone": "warning"
+        }
+      }
+    },
+    {
+      "name": "G02 single OSM primary, no evidence -> nearestWithNoStrongEvidence",
+      "out": {
+        "selectedId": "a",
+        "selectedDistanceMeters": 120.0,
+        "reason": "nearestWithNoStrongEvidence",
+        "requiresConfirmation": false,
+        "cautions": [],
+        "alternatives": [],
+        "baselineNearestId": "a",
+        "baselineNearestDistanceMeters": 120.0,
+        "presentation": {
+          "headline": "Nearest mapped option",
+          "explanation": "No recent evidence is strong enough to justify sending you farther. Showing the nearest mapped option.",
+          "navigationAllowed": true,
+          "requiresConfirmation": false,
+          "primaryCta": "Navigate in Maps",
+          "secondaryCta": "Choose another option",
+          "cautions": [],
+          "tone": "neutral"
+        }
+      }
+    },
+    {
+      "name": "G03 two OSM primaries; nearer has NO evidence, farther has corr-usable WITHIN detour -> promote (recentCorroboratedUsableWithinDetour)",
+      "out": {
+        "selectedId": "near",
+        "selectedDistanceMeters": 100.0,
+        "reason": "nearestWithNoStrongEvidence",
+        "requiresConfirmation": false,
+        "cautions": [],
+        "alternatives": [
+          {
+            "id": "far",
+            "distanceMeters": 300.0,
+            "authority": "sourceMappedPrimary",
+            "condition": "corroboratedUsable",
+            "requiresConfirmation": false,
+            "cautions": []
+          }
+        ],
+        "baselineNearestId": "near",
+        "baselineNearestDistanceMeters": 100.0,
+        "presentation": {
+          "headline": "Nearest mapped option",
+          "explanation": "No recent evidence is strong enough to justify sending you farther. Showing the nearest mapped option.",
+          "navigationAllowed": true,
+          "requiresConfirmation": false,
+          "primaryCta": "Navigate in Maps",
+          "secondaryCta": "Choose another option",
+          "cautions": [],
+          "tone": "neutral"
+        }
+      }
+    },
+    {
+      "name": "G04 corr-usable farther REJECTED by absolute 400m cap (delta 500m) -> nearestWithNoStrongEvidence",
+      "out": {
+        "selectedId": "near",
+        "selectedDistanceMeters": 100.0,
+        "reason": "nearestWithNoStrongEvidence",
+        "requiresConfirmation": false,
+        "cautions": [],
+        "alternatives": [
+          {
+            "id": "far",
+            "distanceMeters": 600.0,
+            "authority": "sourceMappedPrimary",
+            "condition": "corroboratedUsable",
+            "requiresConfirmation": false,
+            "cautions": []
+          }
+        ],
+        "baselineNearestId": "near",
+        "baselineNearestDistanceMeters": 100.0,
+        "presentation": {
+          "headline": "Nearest mapped option",
+          "explanation": "No recent evidence is strong enough to justify sending you farther. Showing the nearest mapped option.",
+          "navigationAllowed": true,
+          "requiresConfirmation": false,
+          "primaryCta": "Navigate in Maps",
+          "secondaryCta": "Choose another option",
+          "cautions": [],
+          "tone": "neutral"
+        }
+      }
+    },
+    {
+      "name": "G05 corr-usable farther REJECTED by 1.5x ratio (300 -> 500 is within 400 abs but 500 > 450) -> nearest",
+      "out": {
+        "selectedId": "near",
+        "selectedDistanceMeters": 300.0,
+        "reason": "nearestWithNoStrongEvidence",
+        "requiresConfirmation": false,
+        "cautions": [],
+        "alternatives": [
+          {
+            "id": "far",
+            "distanceMeters": 500.0,
+            "authority": "sourceMappedPrimary",
+            "condition": "corroboratedUsable",
+            "requiresConfirmation": false,
+            "cautions": []
+          }
+        ],
+        "baselineNearestId": "near",
+        "baselineNearestDistanceMeters": 300.0,
+        "presentation": {
+          "headline": "Nearest mapped option",
+          "explanation": "No recent evidence is strong enough to justify sending you farther. Showing the nearest mapped option.",
+          "navigationAllowed": true,
+          "requiresConfirmation": false,
+          "primaryCta": "Navigate in Maps",
+          "secondaryCta": "Choose another option",
+          "cautions": [],
+          "tone": "neutral"
+        }
+      }
+    },
+    {
+      "name": "G06 nearest primary corroborated-UNAVAILABLE, an escape within BOTH detour guards (200 -> 250) -> avoidedRecentCorroboratedUnavailable",
+      "out": {
+        "selectedId": "esc",
+        "selectedDistanceMeters": 250.0,
+        "reason": "avoidedRecentCorroboratedUnavailable",
+        "requiresConfirmation": false,
+        "cautions": [],
+        "alternatives": [
+          {
+            "id": "bad",
+            "distanceMeters": 200.0,
+            "authority": "sourceMappedPrimary",
+            "condition": "corroboratedUnavailable",
+            "requiresConfirmation": true,
+            "cautions": [
+              "corroboratedUnavailable"
+            ]
+          }
+        ],
+        "baselineNearestId": "bad",
+        "baselineNearestDistanceMeters": 200.0,
+        "presentation": {
+          "headline": "Avoided an option recent checks flag unavailable",
+          "explanation": "The nearest mapped option has multiple recent condition checks indicating unavailable, so GO suggests another nearby option.",
+          "navigationAllowed": true,
+          "requiresConfirmation": false,
+          "primaryCta": "Navigate in Maps",
+          "secondaryCta": "Choose another option",
+          "cautions": [],
+          "tone": "neutral"
+        }
+      }
+    },
+    {
+      "name": "G07 nearest primary corr-UNAVAILABLE, NO escape in detour -> bestMappedOptionCorroboratedUnavailable (requiresConfirmation)",
+      "out": {
+        "selectedId": "bad",
+        "selectedDistanceMeters": 100.0,
+        "reason": "bestMappedOptionCorroboratedUnavailable",
+        "requiresConfirmation": true,
+        "cautions": [
+          "corroboratedUnavailable"
+        ],
+        "alternatives": [
+          {
+            "id": "farbad",
+            "distanceMeters": 900.0,
+            "authority": "sourceMappedPrimary",
+            "condition": "unknown",
+            "requiresConfirmation": false,
+            "cautions": []
+          }
+        ],
+        "baselineNearestId": "bad",
+        "baselineNearestDistanceMeters": 100.0,
+        "presentation": {
+          "headline": "No good nearby option",
+          "explanation": "Multiple recent condition checks agree this option is unavailable, and GO found no reasonable nearby alternative.",
+          "navigationAllowed": true,
+          "requiresConfirmation": true,
+          "primaryCta": "Navigate anyway",
+          "secondaryCta": "Choose another option",
+          "cautions": [
+            "Multiple recent condition checks agree this is unavailable."
+          ],
+          "tone": "warning"
+        }
+      }
+    },
+    {
+      "name": "G08 nearest primary carries a SINGLE unavailable report -> singleNegativeWarning (still selected, cautioned)",
+      "out": {
+        "selectedId": "a",
+        "selectedDistanceMeters": 100.0,
+        "reason": "singleNegativeWarning",
+        "requiresConfirmation": false,
+        "cautions": [
+          "singleReportUnavailable"
+        ],
+        "alternatives": [],
+        "baselineNearestId": "a",
+        "baselineNearestDistanceMeters": 100.0,
+        "presentation": {
+          "headline": "Nearest option, with a warning",
+          "explanation": "A recent condition check indicates the nearest option may be unavailable. GO warns you, but does not reroute everyone based on one check.",
+          "navigationAllowed": true,
+          "requiresConfirmation": false,
+          "primaryCta": "Navigate in Maps",
+          "secondaryCta": "Choose another option",
+          "cautions": [
+            "A recent condition check indicates this may be unavailable."
+          ],
+          "tone": "warning"
+        }
+      }
+    },
+    {
+      "name": "G09 nearest primary CONFLICTED unavailable majority -> conflictedNegativeWarning",
+      "out": {
+        "selectedId": "a",
+        "selectedDistanceMeters": 100.0,
+        "reason": "conflictedNegativeWarning",
+        "requiresConfirmation": false,
+        "cautions": [
+          "conflictedUnavailable"
+        ],
+        "alternatives": [],
+        "baselineNearestId": "a",
+        "baselineNearestDistanceMeters": 100.0,
+        "presentation": {
+          "headline": "Nearest option, with a warning",
+          "explanation": "Recent condition checks conflict. GO keeps the nearer option and shows the warning.",
+          "navigationAllowed": true,
+          "requiresConfirmation": false,
+          "primaryCta": "Navigate in Maps",
+          "secondaryCta": "Choose another option",
+          "cautions": [
+            "Recent condition checks conflict, with more indicating unavailable."
+          ],
+          "tone": "warning"
+        }
+      }
+    },
+    {
+      "name": "G10 no primary; one uncorroborated community submission -> communitySubmissionFallback (requiresConfirmation)",
+      "out": {
+        "selectedId": "c",
+        "selectedDistanceMeters": 150.0,
+        "reason": "communitySubmissionFallback",
+        "requiresConfirmation": true,
+        "cautions": [
+          "unconfirmedCommunityIdentity"
+        ],
+        "alternatives": [],
+        "baselineNearestId": "c",
+        "baselineNearestDistanceMeters": 150.0,
+        "presentation": {
+          "headline": "Community-added location",
+          "explanation": "No normal mapped option is available in the current GO pool. This community-added location needs confirmation.",
+          "navigationAllowed": true,
+          "requiresConfirmation": true,
+          "primaryCta": "Navigate anyway",
+          "secondaryCta": "Choose another option",
+          "cautions": [
+            "Community-added location; identity not yet corroborated."
+          ],
+          "tone": "warning"
+        }
+      }
+    },
+    {
+      "name": "G11 community submission WITH corroborated-usable -> primary (communityCorroborated) recentCorroboratedUsableWithinDetour",
+      "out": {
+        "selectedId": "c",
+        "selectedDistanceMeters": 150.0,
+        "reason": "recentCorroboratedUsableWithinDetour",
+        "requiresConfirmation": false,
+        "cautions": [],
+        "alternatives": [],
+        "baselineNearestId": "c",
+        "baselineNearestDistanceMeters": 150.0,
+        "presentation": {
+          "headline": "Recent checks indicate usable",
+          "explanation": "Multiple recent condition checks agree this option is usable, so GO prefers it within a small nearby detour.",
+          "navigationAllowed": true,
+          "requiresConfirmation": false,
+          "primaryCta": "Navigate in Maps",
+          "secondaryCta": "Choose another option",
+          "cautions": [],
+          "tone": "positive"
+        }
+      }
+    },
+    {
+      "name": "G12 only candidate (needs_confirm) toilets -> candidateFallback (requiresConfirmation, evidence cannot promote)",
+      "out": {
+        "selectedId": "cand",
+        "selectedDistanceMeters": 90.0,
+        "reason": "candidateFallback",
+        "requiresConfirmation": true,
+        "cautions": [
+          "candidateIdentity"
+        ],
+        "alternatives": [],
+        "baselineNearestId": "cand",
+        "baselineNearestDistanceMeters": 90.0,
+        "presentation": {
+          "headline": "Unconfirmed location",
+          "explanation": "No normal mapped option is available in the current GO pool. This is a possible toilet location; its identity is not confirmed.",
+          "navigationAllowed": true,
+          "requiresConfirmation": true,
+          "primaryCta": "Navigate anyway",
+          "secondaryCta": "Choose another option",
+          "cautions": [
+            "Possible toilet location; identity not confirmed."
+          ],
+          "tone": "warning"
+        }
+      }
+    },
+    {
+      "name": "G13 only unknown-identity toilets -> candidateFallback reason with unknownIdentity caution",
+      "out": {
+        "selectedId": "u",
+        "selectedDistanceMeters": 80.0,
+        "reason": "candidateFallback",
+        "requiresConfirmation": true,
+        "cautions": [
+          "unknownIdentity"
+        ],
+        "alternatives": [],
+        "baselineNearestId": "u",
+        "baselineNearestDistanceMeters": 80.0,
+        "presentation": {
+          "headline": "Unconfirmed location",
+          "explanation": "No normal mapped option is available in the current GO pool. The source and identity of this location are not confirmed.",
+          "navigationAllowed": true,
+          "requiresConfirmation": true,
+          "primaryCta": "Navigate anyway",
+          "secondaryCta": "Choose another option",
+          "cautions": [
+            "Location identity is not confirmed."
+          ],
+          "tone": "warning"
+        }
+      }
+    },
+    {
+      "name": "G14 every option moderation-flagged -> onlyFlaggedOrUnconfirmedOptions (no selection)",
+      "out": {
+        "selectedId": null,
+        "selectedDistanceMeters": null,
+        "reason": "onlyFlaggedOrUnconfirmedOptions",
+        "requiresConfirmation": false,
+        "cautions": [
+          "moderationFlagged"
+        ],
+        "alternatives": [],
+        "baselineNearestId": null,
+        "baselineNearestDistanceMeters": null,
+        "presentation": {
+          "headline": "No confident GO suggestion",
+          "explanation": "No confident GO suggestion right now.",
+          "navigationAllowed": false,
+          "requiresConfirmation": false,
+          "primaryCta": null,
+          "secondaryCta": "Browse map",
+          "cautions": [
+            "This location is under moderation review and is not offered automatically."
+          ],
+          "tone": "warning"
+        }
+      }
+    },
+    {
+      "name": "G15 flagged one EXCLUDED, an unflagged primary selected + flagged never appears as an alternative",
+      "out": {
+        "selectedId": "ok",
+        "selectedDistanceMeters": 200.0,
+        "reason": "nearestWithNoStrongEvidence",
+        "requiresConfirmation": false,
+        "cautions": [],
+        "alternatives": [
+          {
+            "id": "ok2",
+            "distanceMeters": 260.0,
+            "authority": "sourceMappedPrimary",
+            "condition": "unknown",
+            "requiresConfirmation": false,
+            "cautions": []
+          }
+        ],
+        "baselineNearestId": "ok",
+        "baselineNearestDistanceMeters": 200.0,
+        "presentation": {
+          "headline": "Nearest mapped option",
+          "explanation": "No recent evidence is strong enough to justify sending you farther. Showing the nearest mapped option.",
+          "navigationAllowed": true,
+          "requiresConfirmation": false,
+          "primaryCta": "Navigate in Maps",
+          "secondaryCta": "Choose another option",
+          "cautions": [],
+          "tone": "neutral"
+        }
+      }
+    },
+    {
+      "name": "G16 three primaries -> selected + 2 alternatives from same tier, distance sorted",
+      "out": {
+        "selectedId": "p1",
+        "selectedDistanceMeters": 110.0,
+        "reason": "nearestWithNoStrongEvidence",
+        "requiresConfirmation": false,
+        "cautions": [],
+        "alternatives": [
+          {
+            "id": "p2",
+            "distanceMeters": 220.0,
+            "authority": "sourceMappedPrimary",
+            "condition": "unknown",
+            "requiresConfirmation": false,
+            "cautions": []
+          },
+          {
+            "id": "p3",
+            "distanceMeters": 330.0,
+            "authority": "sourceMappedPrimary",
+            "condition": "unknown",
+            "requiresConfirmation": false,
+            "cautions": []
+          },
+          {
+            "id": "p4",
+            "distanceMeters": 440.0,
+            "authority": "sourceMappedPrimary",
+            "condition": "unknown",
+            "requiresConfirmation": false,
+            "cautions": []
+          }
+        ],
+        "baselineNearestId": "p1",
+        "baselineNearestDistanceMeters": 110.0,
+        "presentation": {
+          "headline": "Nearest mapped option",
+          "explanation": "No recent evidence is strong enough to justify sending you farther. Showing the nearest mapped option.",
+          "navigationAllowed": true,
+          "requiresConfirmation": false,
+          "primaryCta": "Navigate in Maps",
+          "secondaryCta": "Choose another option",
+          "cautions": [],
+          "tone": "neutral"
+        }
+      }
+    },
+    {
+      "name": "G17 invalid distances (NaN / negative / Infinity) dropped; the one valid primary wins",
+      "out": {
+        "selectedId": "good",
+        "selectedDistanceMeters": 400.0,
+        "reason": "nearestWithNoStrongEvidence",
+        "requiresConfirmation": false,
+        "cautions": [],
+        "alternatives": [],
+        "baselineNearestId": "good",
+        "baselineNearestDistanceMeters": 400.0,
+        "presentation": {
+          "headline": "Nearest mapped option",
+          "explanation": "No recent evidence is strong enough to justify sending you farther. Showing the nearest mapped option.",
+          "navigationAllowed": true,
+          "requiresConfirmation": false,
+          "primaryCta": "Navigate in Maps",
+          "secondaryCta": "Choose another option",
+          "cautions": [],
+          "tone": "neutral"
+        }
+      }
+    },
+    {
+      "name": "G18 EXPIRED corr-usable does NOT promote (evidence ignored) -> nearest chosen, no promotion",
+      "out": {
+        "selectedId": "near",
+        "selectedDistanceMeters": 100.0,
+        "reason": "nearestWithNoStrongEvidence",
+        "requiresConfirmation": false,
+        "cautions": [],
+        "alternatives": [
+          {
+            "id": "far",
+            "distanceMeters": 300.0,
+            "authority": "sourceMappedPrimary",
+            "condition": "unknown",
+            "requiresConfirmation": false,
+            "cautions": []
+          }
+        ],
+        "baselineNearestId": "near",
+        "baselineNearestDistanceMeters": 100.0,
+        "presentation": {
+          "headline": "Nearest mapped option",
+          "explanation": "No recent evidence is strong enough to justify sending you farther. Showing the nearest mapped option.",
+          "navigationAllowed": true,
+          "requiresConfirmation": false,
+          "primaryCta": "Navigate in Maps",
+          "secondaryCta": "Choose another option",
+          "cautions": [],
+          "tone": "neutral"
+        }
+      }
+    },
+    {
+      "name": "G19 order-independence: same pool as G16 shuffled -> identical result",
+      "out": {
+        "selectedId": "p1",
+        "selectedDistanceMeters": 110.0,
+        "reason": "nearestWithNoStrongEvidence",
+        "requiresConfirmation": false,
+        "cautions": [],
+        "alternatives": [
+          {
+            "id": "p2",
+            "distanceMeters": 220.0,
+            "authority": "sourceMappedPrimary",
+            "condition": "unknown",
+            "requiresConfirmation": false,
+            "cautions": []
+          },
+          {
+            "id": "p3",
+            "distanceMeters": 330.0,
+            "authority": "sourceMappedPrimary",
+            "condition": "unknown",
+            "requiresConfirmation": false,
+            "cautions": []
+          },
+          {
+            "id": "p4",
+            "distanceMeters": 440.0,
+            "authority": "sourceMappedPrimary",
+            "condition": "unknown",
+            "requiresConfirmation": false,
+            "cautions": []
+          }
+        ],
+        "baselineNearestId": "p1",
+        "baselineNearestDistanceMeters": 110.0,
+        "presentation": {
+          "headline": "Nearest mapped option",
+          "explanation": "No recent evidence is strong enough to justify sending you farther. Showing the nearest mapped option.",
+          "navigationAllowed": true,
+          "requiresConfirmation": false,
+          "primaryCta": "Navigate in Maps",
+          "secondaryCta": "Choose another option",
+          "cautions": [],
+          "tone": "neutral"
+        }
+      }
+    },
+    {
+      "name": "G20 ratings + votes present but NO condition -> zero GO authority, plain nearest",
+      "out": {
+        "selectedId": "b",
+        "selectedDistanceMeters": 120.0,
+        "reason": "nearestWithNoStrongEvidence",
+        "requiresConfirmation": false,
+        "cautions": [],
+        "alternatives": [
+          {
+            "id": "a",
+            "distanceMeters": 500.0,
+            "authority": "sourceMappedPrimary",
+            "condition": "unknown",
+            "requiresConfirmation": false,
+            "cautions": []
+          }
+        ],
+        "baselineNearestId": "b",
+        "baselineNearestDistanceMeters": 120.0,
+        "presentation": {
+          "headline": "Nearest mapped option",
+          "explanation": "No recent evidence is strong enough to justify sending you farther. Showing the nearest mapped option.",
+          "navigationAllowed": true,
+          "requiresConfirmation": false,
+          "primaryCta": "Navigate in Maps",
+          "secondaryCta": "Choose another option",
+          "cautions": [],
+          "tone": "neutral"
+        }
+      }
+    },
+    {
+      "name": "G21 farther corr-usable ACCEPTED (near 300, far 400: delta 100<=400 and 400<=450) -> recentCorroboratedUsableWithinDetour promotes 'far'",
+      "out": {
+        "selectedId": "far",
+        "selectedDistanceMeters": 400.0,
+        "reason": "recentCorroboratedUsableWithinDetour",
+        "requiresConfirmation": false,
+        "cautions": [],
+        "alternatives": [
+          {
+            "id": "near",
+            "distanceMeters": 300.0,
+            "authority": "sourceMappedPrimary",
+            "condition": "unknown",
+            "requiresConfirmation": false,
+            "cautions": []
+          }
+        ],
+        "baselineNearestId": "near",
+        "baselineNearestDistanceMeters": 300.0,
+        "presentation": {
+          "headline": "Recent checks indicate usable",
+          "explanation": "Multiple recent condition checks agree this option is usable, so GO prefers it within a small nearby detour.",
+          "navigationAllowed": true,
+          "requiresConfirmation": false,
+          "primaryCta": "Navigate in Maps",
+          "secondaryCta": "Choose another option",
+          "cautions": [],
+          "tone": "positive"
+        }
+      }
+    },
+    {
+      "name": "G22 nearest primary corroborated-usable BUT water reported out + lock reported out -> positive selection carrying water/lock cautions",
+      "out": {
+        "selectedId": "a",
+        "selectedDistanceMeters": 100.0,
+        "reason": "recentCorroboratedUsableWithinDetour",
+        "requiresConfirmation": false,
+        "cautions": [
+          "lockReportedOut",
+          "waterReportedOut"
+        ],
+        "alternatives": [],
+        "baselineNearestId": "a",
+        "baselineNearestDistanceMeters": 100.0,
+        "presentation": {
+          "headline": "Recent checks indicate usable",
+          "explanation": "Multiple recent condition checks agree this option is usable, so GO prefers it within a small nearby detour.",
+          "navigationAllowed": true,
+          "requiresConfirmation": false,
+          "primaryCta": "Navigate in Maps",
+          "secondaryCta": "Choose another option",
+          "cautions": [
+            "Recent condition checks indicate that water is unavailable.",
+            "Recent condition checks indicate that the lock is not working."
+          ],
+          "tone": "positive"
+        }
+      }
+    },
+    {
+      "name": "BND-G1 gap == 400.0 exactly -> PROMOTE (withinEvidenceDetour is <=400)",
+      "out": {
+        "selectedId": "far",
+        "selectedDistanceMeters": 1400.0,
+        "reason": "recentCorroboratedUsableWithinDetour",
+        "requiresConfirmation": false,
+        "cautions": [],
+        "alternatives": [
+          {
+            "id": "near",
+            "distanceMeters": 1000.0,
+            "authority": "sourceMappedPrimary",
+            "condition": "unknown",
+            "requiresConfirmation": false,
+            "cautions": []
+          }
+        ],
+        "baselineNearestId": "near",
+        "baselineNearestDistanceMeters": 1000.0,
+        "presentation": {
+          "headline": "Recent checks indicate usable",
+          "explanation": "Multiple recent condition checks agree this option is usable, so GO prefers it within a small nearby detour.",
+          "navigationAllowed": true,
+          "requiresConfirmation": false,
+          "primaryCta": "Navigate in Maps",
+          "secondaryCta": "Choose another option",
+          "cautions": [],
+          "tone": "positive"
+        }
+      }
+    },
+    {
+      "name": "BND-G2 gap == 400.001 -> do NOT promote -> nearest",
+      "out": {
+        "selectedId": "near",
+        "selectedDistanceMeters": 1000.0,
+        "reason": "nearestWithNoStrongEvidence",
+        "requiresConfirmation": false,
+        "cautions": [],
+        "alternatives": [
+          {
+            "id": "far",
+            "distanceMeters": 1400.001,
+            "authority": "sourceMappedPrimary",
+            "condition": "corroboratedUsable",
+            "requiresConfirmation": false,
+            "cautions": []
+          }
+        ],
+        "baselineNearestId": "near",
+        "baselineNearestDistanceMeters": 1000.0,
+        "presentation": {
+          "headline": "Nearest mapped option",
+          "explanation": "No recent evidence is strong enough to justify sending you farther. Showing the nearest mapped option.",
+          "navigationAllowed": true,
+          "requiresConfirmation": false,
+          "primaryCta": "Navigate in Maps",
+          "secondaryCta": "Choose another option",
+          "cautions": [],
+          "tone": "neutral"
+        }
+      }
+    },
+    {
+      "name": "BND-G3 ratio == 1.5 exactly (300 -> 450) -> PROMOTE",
+      "out": {
+        "selectedId": "far",
+        "selectedDistanceMeters": 450.0,
+        "reason": "recentCorroboratedUsableWithinDetour",
+        "requiresConfirmation": false,
+        "cautions": [],
+        "alternatives": [
+          {
+            "id": "near",
+            "distanceMeters": 300.0,
+            "authority": "sourceMappedPrimary",
+            "condition": "unknown",
+            "requiresConfirmation": false,
+            "cautions": []
+          }
+        ],
+        "baselineNearestId": "near",
+        "baselineNearestDistanceMeters": 300.0,
+        "presentation": {
+          "headline": "Recent checks indicate usable",
+          "explanation": "Multiple recent condition checks agree this option is usable, so GO prefers it within a small nearby detour.",
+          "navigationAllowed": true,
+          "requiresConfirmation": false,
+          "primaryCta": "Navigate in Maps",
+          "secondaryCta": "Choose another option",
+          "cautions": [],
+          "tone": "positive"
+        }
+      }
+    },
+    {
+      "name": "BND-G4 ratio == 1.5 + eps (300 -> 450.001) -> do NOT promote",
+      "out": {
+        "selectedId": "near",
+        "selectedDistanceMeters": 300.0,
+        "reason": "nearestWithNoStrongEvidence",
+        "requiresConfirmation": false,
+        "cautions": [],
+        "alternatives": [
+          {
+            "id": "far",
+            "distanceMeters": 450.001,
+            "authority": "sourceMappedPrimary",
+            "condition": "corroboratedUsable",
+            "requiresConfirmation": false,
+            "cautions": []
+          }
+        ],
+        "baselineNearestId": "near",
+        "baselineNearestDistanceMeters": 300.0,
+        "presentation": {
+          "headline": "Nearest mapped option",
+          "explanation": "No recent evidence is strong enough to justify sending you farther. Showing the nearest mapped option.",
+          "navigationAllowed": true,
+          "requiresConfirmation": false,
+          "primaryCta": "Navigate in Maps",
+          "secondaryCta": "Choose another option",
+          "cautions": [],
+          "tone": "neutral"
+        }
+      }
+    },
+    {
+      "name": "BND-G5 equal distance -> deterministic lexical id order (bbb vs aaa -> aaa)",
+      "out": {
+        "selectedId": "aaa",
+        "selectedDistanceMeters": 200.0,
+        "reason": "nearestWithNoStrongEvidence",
+        "requiresConfirmation": false,
+        "cautions": [],
+        "alternatives": [
+          {
+            "id": "bbb",
+            "distanceMeters": 200.0,
+            "authority": "sourceMappedPrimary",
+            "condition": "unknown",
+            "requiresConfirmation": false,
+            "cautions": []
+          }
+        ],
+        "baselineNearestId": "aaa",
+        "baselineNearestDistanceMeters": 200.0,
+        "presentation": {
+          "headline": "Nearest mapped option",
+          "explanation": "No recent evidence is strong enough to justify sending you farther. Showing the nearest mapped option.",
+          "navigationAllowed": true,
+          "requiresConfirmation": false,
+          "primaryCta": "Navigate in Maps",
+          "secondaryCta": "Choose another option",
+          "cautions": [],
+          "tone": "neutral"
+        }
+      }
+    },
+    {
+      "name": "BND-G6 near-equal distance (200.0 vs 200.0000001) -> nearer id wins",
+      "out": {
+        "selectedId": "x1",
+        "selectedDistanceMeters": 200.0,
+        "reason": "nearestWithNoStrongEvidence",
+        "requiresConfirmation": false,
+        "cautions": [],
+        "alternatives": [
+          {
+            "id": "x2",
+            "distanceMeters": 200.0000001,
+            "authority": "sourceMappedPrimary",
+            "condition": "unknown",
+            "requiresConfirmation": false,
+            "cautions": []
+          }
+        ],
+        "baselineNearestId": "x1",
+        "baselineNearestDistanceMeters": 200.0,
+        "presentation": {
+          "headline": "Nearest mapped option",
+          "explanation": "No recent evidence is strong enough to justify sending you farther. Showing the nearest mapped option.",
+          "navigationAllowed": true,
+          "requiresConfirmation": false,
+          "primaryCta": "Navigate in Maps",
+          "secondaryCta": "Choose another option",
+          "cautions": [],
+          "tone": "neutral"
+        }
+      }
+    }
+  ],
+  "revalidation": [
+    {
+      "name": "R01 unchanged selected, no confirmation -> launch",
+      "out": {
+        "outcome": "launch"
+      }
+    },
+    {
+      "name": "R02 fresh selected is a DIFFERENT toilet -> refreshSuggestion",
+      "out": {
+        "outcome": "refreshSuggestion"
+      }
+    },
+    {
+      "name": "R03 same selected but it GAINED a corroborated-unavailable caution -> refreshOption",
+      "out": {
+        "outcome": "refreshSuggestion"
+      }
+    },
+    {
+      "name": "R04 fresh selected requires confirmation (community fallback) -> confirmThenLaunch",
+      "out": {
+        "outcome": "confirmThenLaunch"
+      }
+    },
+    {
+      "name": "R05 fresh has NO selection -> refreshSuggestion",
+      "out": {
+        "outcome": "refreshSuggestion"
+      }
+    },
+    {
+      "name": "R06 navigate a PINNED ALTERNATIVE ('far') that got materially worse in fresh -> refreshOption",
+      "out": {
+        "outcome": "refreshOption"
+      }
+    }
+  ],
+  "freshness": [
+    {
+      "name": "BND-F1 age == maxAge exactly -> fresh (<=)",
+      "out": {
+        "fresh": true
+      }
+    },
+    {
+      "name": "BND-F2 age == maxAge + 1 ms -> stale",
+      "out": {
+        "fresh": false
+      }
+    },
+    {
+      "name": "BND-F3 age == 0 -> fresh",
+      "out": {
+        "fresh": true
+      }
+    },
+    {
+      "name": "BND-F4 future timestamp (age negative) -> reject",
+      "out": {
+        "fresh": false
+      }
+    },
+    {
+      "name": "BND-F5 future by 1 minute -> reject",
+      "out": {
+        "fresh": false
+      }
+    }
+  ],
+  "distances": [
+    {
+      "name": "D1 same point -> 0 m",
+      "out": {
+        "distances": [
+          {
+            "id": "same",
+            "meters": 0.0
+          }
+        ]
+      }
+    },
+    {
+      "name": "D2 ~10 m north",
+      "out": {
+        "distances": [
+          {
+            "id": "n10",
+            "meters": 10.01875417141082
+          }
+        ]
+      }
+    },
+    {
+      "name": "D3 ~400 m north (GO detour cap)",
+      "out": {
+        "distances": [
+          {
+            "id": "n400",
+            "meters": 400.75016685564185
+          }
+        ]
+      }
+    },
+    {
+      "name": "D4 ~1.5 km east",
+      "out": {
+        "distances": [
+          {
+            "id": "e1500",
+            "meters": 1497.7343010791608
+          }
+        ]
+      }
+    },
+    {
+      "name": "D5 ~15 km south-west",
+      "out": {
+        "distances": [
+          {
+            "id": "sw15k",
+            "meters": 14964.97004948814
+          }
+        ]
+      }
+    },
+    {
+      "name": "D6 across the equator-ward degree boundary",
+      "out": {
+        "distances": [
+          {
+            "id": "deg",
+            "meters": 22.263898158602828
+          }
+        ]
+      }
+    },
+    {
+      "name": "D7 Jodhpur -> Jaipur (~335 km)",
+      "out": {
+        "distances": [
+          {
+            "id": "jaipur",
+            "meters": 285105.00605977164
+          }
+        ]
+      }
+    },
+    {
+      "name": "D8 one call, three targets (ordering input)",
+      "out": {
+        "distances": [
+          {
+            "id": "b",
+            "meters": 222.63898158642377
+          },
+          {
+            "id": "a",
+            "meters": 74.76931130702596
+          },
+          {
+            "id": "c",
+            "meters": 3732.450561671718
+          }
+        ]
+      }
+    }
+  ],
+  "hint": [
+    {
+      "name": "H1 hint = fresh NON-selected active-tier alternative -> focus that alternative",
+      "out": {
+        "selectedId": "near",
+        "selectedDistanceMeters": 100.0,
+        "reason": "nearestWithNoStrongEvidence",
+        "requiresConfirmation": false,
+        "cautions": [],
+        "alternatives": [
+          {
+            "id": "mid",
+            "distanceMeters": 180.0,
+            "authority": "sourceMappedPrimary",
+            "condition": "corroboratedUsable",
+            "requiresConfirmation": false,
+            "cautions": []
+          },
+          {
+            "id": "far",
+            "distanceMeters": 900.0,
+            "authority": "sourceMappedPrimary",
+            "condition": "unknown",
+            "requiresConfirmation": false,
+            "cautions": []
+          }
+        ],
+        "baselineNearestId": "near",
+        "baselineNearestDistanceMeters": 100.0,
+        "presentation": {
+          "headline": "Nearest mapped option",
+          "explanation": "No recent evidence is strong enough to justify sending you farther. Showing the nearest mapped option.",
+          "navigationAllowed": true,
+          "requiresConfirmation": false,
+          "primaryCta": "Navigate in Maps",
+          "secondaryCta": "Choose another option",
+          "cautions": [],
+          "tone": "neutral"
+        },
+        "focus": {
+          "id": "mid",
+          "distanceMeters": 180.0,
+          "authority": "sourceMappedPrimary",
+          "condition": "corroboratedUsable",
+          "requiresConfirmation": false,
+          "cautions": [],
+          "isSelected": false,
+          "presentation": {
+            "headline": "Mapped option",
+            "explanation": "A nearby alternative from the same recommendation tier.",
+            "navigationAllowed": true,
+            "requiresConfirmation": false,
+            "primaryCta": "Navigate",
+            "secondaryCta": "Back",
+            "cautions": [],
+            "tone": "positive"
+          }
+        }
+      }
+    },
+    {
+      "name": "H2 hint == selected -> focus null",
+      "out": {
+        "selectedId": "near",
+        "selectedDistanceMeters": 100.0,
+        "reason": "nearestWithNoStrongEvidence",
+        "requiresConfirmation": false,
+        "cautions": [],
+        "alternatives": [
+          {
+            "id": "mid",
+            "distanceMeters": 180.0,
+            "authority": "sourceMappedPrimary",
+            "condition": "corroboratedUsable",
+            "requiresConfirmation": false,
+            "cautions": []
+          },
+          {
+            "id": "far",
+            "distanceMeters": 900.0,
+            "authority": "sourceMappedPrimary",
+            "condition": "unknown",
+            "requiresConfirmation": false,
+            "cautions": []
+          }
+        ],
+        "baselineNearestId": "near",
+        "baselineNearestDistanceMeters": 100.0,
+        "presentation": {
+          "headline": "Nearest mapped option",
+          "explanation": "No recent evidence is strong enough to justify sending you farther. Showing the nearest mapped option.",
+          "navigationAllowed": true,
+          "requiresConfirmation": false,
+          "primaryCta": "Navigate in Maps",
+          "secondaryCta": "Choose another option",
+          "cautions": [],
+          "tone": "neutral"
+        },
+        "focus": null
+      }
+    },
+    {
+      "name": "H3 hint empty string -> focus null",
+      "out": {
+        "selectedId": "near",
+        "selectedDistanceMeters": 100.0,
+        "reason": "nearestWithNoStrongEvidence",
+        "requiresConfirmation": false,
+        "cautions": [],
+        "alternatives": [
+          {
+            "id": "mid",
+            "distanceMeters": 180.0,
+            "authority": "sourceMappedPrimary",
+            "condition": "corroboratedUsable",
+            "requiresConfirmation": false,
+            "cautions": []
+          },
+          {
+            "id": "far",
+            "distanceMeters": 900.0,
+            "authority": "sourceMappedPrimary",
+            "condition": "unknown",
+            "requiresConfirmation": false,
+            "cautions": []
+          }
+        ],
+        "baselineNearestId": "near",
+        "baselineNearestDistanceMeters": 100.0,
+        "presentation": {
+          "headline": "Nearest mapped option",
+          "explanation": "No recent evidence is strong enough to justify sending you farther. Showing the nearest mapped option.",
+          "navigationAllowed": true,
+          "requiresConfirmation": false,
+          "primaryCta": "Navigate in Maps",
+          "secondaryCta": "Choose another option",
+          "cautions": [],
+          "tone": "neutral"
+        },
+        "focus": null
+      }
+    },
+    {
+      "name": "H4 hint unknown id -> focus null",
+      "out": {
+        "selectedId": "near",
+        "selectedDistanceMeters": 100.0,
+        "reason": "nearestWithNoStrongEvidence",
+        "requiresConfirmation": false,
+        "cautions": [],
+        "alternatives": [
+          {
+            "id": "mid",
+            "distanceMeters": 180.0,
+            "authority": "sourceMappedPrimary",
+            "condition": "corroboratedUsable",
+            "requiresConfirmation": false,
+            "cautions": []
+          },
+          {
+            "id": "far",
+            "distanceMeters": 900.0,
+            "authority": "sourceMappedPrimary",
+            "condition": "unknown",
+            "requiresConfirmation": false,
+            "cautions": []
+          }
+        ],
+        "baselineNearestId": "near",
+        "baselineNearestDistanceMeters": 100.0,
+        "presentation": {
+          "headline": "Nearest mapped option",
+          "explanation": "No recent evidence is strong enough to justify sending you farther. Showing the nearest mapped option.",
+          "navigationAllowed": true,
+          "requiresConfirmation": false,
+          "primaryCta": "Navigate in Maps",
+          "secondaryCta": "Choose another option",
+          "cautions": [],
+          "tone": "neutral"
+        },
+        "focus": null
+      }
+    },
+    {
+      "name": "H5 hint moderation-flagged (dropped from active tier) -> focus null",
+      "out": {
+        "selectedId": "near",
+        "selectedDistanceMeters": 100.0,
+        "reason": "nearestWithNoStrongEvidence",
+        "requiresConfirmation": false,
+        "cautions": [],
+        "alternatives": [
+          {
+            "id": "far",
+            "distanceMeters": 900.0,
+            "authority": "sourceMappedPrimary",
+            "condition": "unknown",
+            "requiresConfirmation": false,
+            "cautions": []
+          }
+        ],
+        "baselineNearestId": "near",
+        "baselineNearestDistanceMeters": 100.0,
+        "presentation": {
+          "headline": "Nearest mapped option",
+          "explanation": "No recent evidence is strong enough to justify sending you farther. Showing the nearest mapped option.",
+          "navigationAllowed": true,
+          "requiresConfirmation": false,
+          "primaryCta": "Navigate in Maps",
+          "secondaryCta": "Choose another option",
+          "cautions": [],
+          "tone": "neutral"
+        },
+        "focus": null
+      }
+    },
+    {
+      "name": "H6 hint lower authority tier than the active tier -> focus null",
+      "out": {
+        "selectedId": "near",
+        "selectedDistanceMeters": 100.0,
+        "reason": "nearestWithNoStrongEvidence",
+        "requiresConfirmation": false,
+        "cautions": [],
+        "alternatives": [
+          {
+            "id": "far",
+            "distanceMeters": 400.0,
+            "authority": "sourceMappedPrimary",
+            "condition": "corroboratedUsable",
+            "requiresConfirmation": false,
+            "cautions": []
+          }
+        ],
+        "baselineNearestId": "near",
+        "baselineNearestDistanceMeters": 100.0,
+        "presentation": {
+          "headline": "Nearest mapped option",
+          "explanation": "No recent evidence is strong enough to justify sending you farther. Showing the nearest mapped option.",
+          "navigationAllowed": true,
+          "requiresConfirmation": false,
+          "primaryCta": "Navigate in Maps",
+          "secondaryCta": "Choose another option",
+          "cautions": [],
+          "tone": "neutral"
+        },
+        "focus": null
+      }
+    },
+    {
+      "name": "H7 candidate alternative when the candidate tier is genuinely active -> focus it",
+      "out": {
+        "selectedId": "c1",
+        "selectedDistanceMeters": 100.0,
+        "reason": "candidateFallback",
+        "requiresConfirmation": true,
+        "cautions": [
+          "candidateIdentity"
+        ],
+        "alternatives": [
+          {
+            "id": "c2",
+            "distanceMeters": 160.0,
+            "authority": "candidateFallback",
+            "condition": "unknown",
+            "requiresConfirmation": true,
+            "cautions": [
+              "candidateIdentity"
+            ]
+          }
+        ],
+        "baselineNearestId": "c1",
+        "baselineNearestDistanceMeters": 100.0,
+        "presentation": {
+          "headline": "Unconfirmed location",
+          "explanation": "No normal mapped option is available in the current GO pool. This is a possible toilet location; its identity is not confirmed.",
+          "navigationAllowed": true,
+          "requiresConfirmation": true,
+          "primaryCta": "Navigate anyway",
+          "secondaryCta": "Choose another option",
+          "cautions": [
+            "Possible toilet location; identity not confirmed."
+          ],
+          "tone": "warning"
+        },
+        "focus": {
+          "id": "c2",
+          "distanceMeters": 160.0,
+          "authority": "candidateFallback",
+          "condition": "unknown",
+          "requiresConfirmation": true,
+          "cautions": [
+            "candidateIdentity"
+          ],
+          "isSelected": false,
+          "presentation": {
+            "headline": "Unconfirmed location",
+            "explanation": "Possible toilet location; identity not confirmed.",
+            "navigationAllowed": true,
+            "requiresConfirmation": true,
+            "primaryCta": "Navigate anyway",
+            "secondaryCta": "Back",
+            "cautions": [
+              "Possible toilet location; identity not confirmed."
+            ],
+            "tone": "warning"
+          }
+        }
+      }
+    },
+    {
+      "name": "H8 focused-alt presentation comes from presentGoAlternative, not the selected GoDecision",
+      "out": {
+        "selectedId": "sel",
+        "selectedDistanceMeters": 100.0,
+        "reason": "recentCorroboratedUsableWithinDetour",
+        "requiresConfirmation": false,
+        "cautions": [],
+        "alternatives": [
+          {
+            "id": "altw",
+            "distanceMeters": 150.0,
+            "authority": "sourceMappedPrimary",
+            "condition": "conflictedUnavailableMajority",
+            "requiresConfirmation": false,
+            "cautions": [
+              "conflictedUnavailable"
+            ]
+          },
+          {
+            "id": "far",
+            "distanceMeters": 900.0,
+            "authority": "sourceMappedPrimary",
+            "condition": "unknown",
+            "requiresConfirmation": false,
+            "cautions": []
+          }
+        ],
+        "baselineNearestId": "sel",
+        "baselineNearestDistanceMeters": 100.0,
+        "presentation": {
+          "headline": "Recent checks indicate usable",
+          "explanation": "Multiple recent condition checks agree this option is usable, so GO prefers it within a small nearby detour.",
+          "navigationAllowed": true,
+          "requiresConfirmation": false,
+          "primaryCta": "Navigate in Maps",
+          "secondaryCta": "Choose another option",
+          "cautions": [],
+          "tone": "positive"
+        },
+        "focus": {
+          "id": "altw",
+          "distanceMeters": 150.0,
+          "authority": "sourceMappedPrimary",
+          "condition": "conflictedUnavailableMajority",
+          "requiresConfirmation": false,
+          "cautions": [
+            "conflictedUnavailable"
+          ],
+          "isSelected": false,
+          "presentation": {
+            "headline": "Mapped option",
+            "explanation": "Recent condition checks conflict, with more indicating unavailable.",
+            "navigationAllowed": true,
+            "requiresConfirmation": false,
+            "primaryCta": "Navigate",
+            "secondaryCta": "Back",
+            "cautions": [
+              "Recent condition checks conflict, with more indicating unavailable."
+            ],
+            "tone": "warning"
+          }
+        }
+      }
+    }
+  ]
+}

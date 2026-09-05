@@ -17,7 +17,7 @@
             android:id="@+id/widget_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Nearest loo"
+            android:text="GO suggestion"
             android:textColor="#1D9E75"
             android:textSize="14sp"
             android:textStyle="bold" />

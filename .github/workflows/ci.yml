@@ -6,43 +6,135 @@ on:
   pull_request:
     branches: [ main ]
 
-jobs:
-  analyze-and-build:
-    name: Analyze & build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+# No job in this workflow deploys anything, writes to production Firestore, or
+# requires a real Firebase/Maps production secret to pass. A PR from a fork
+# goes green without repository-secret access.
 
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
+permissions:
+  contents: read
+
+jobs:
+  core:
+    name: Shared core (Dart)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/shauchmap_core
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub get
+      - run: dart analyze
+      - run: dart test
+
+  android:
+    name: Android app (analyze + test)
+    runs-on: ubuntu-latest
+    env:
+      # Harmless placeholder — sufficient to satisfy the manifest placeholder
+      # at compile time. Never a real credential. A --release assemble/bundle
+      # fails closed without a real one (see android/app/build.gradle.kts).
+      MAPS_API_KEY: "CI_PLACEHOLDER_NOT_A_REAL_KEY"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
+      - name: Use the CI Firebase fixture
+        # lib/firebase_options.dart is per-project and git-ignored (see
+        # SECURITY.md) — every fork generates its own via `flutterfire
+        # configure`. This fixture is placeholder-only, not a real project,
+        # and exists so static analysis and unit tests have something to
+        # import; it's never used for an actual Android build/assemble.
+        run: cp lib/firebase_options.ci-fixture.dart lib/firebase_options.dart
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+      # A full `flutter build apk` additionally needs android/app/google-
+      # services.json (consumed by the Gradle google-services plugin) and a
+      # real or fixture value for that is not wired up yet. analyze + test
+      # already cover everything this repo's own Dart-level test suites
+      # exercise.
 
-      - name: Install dependencies
-        run: flutter pub get
+  instant:
+    name: Instant (web)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: instant
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: instant/package-lock.json
+      - run: npm ci
+      - run: npm run build:core
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - name: Fixture production build (no Firebase project needed)
+        run: npm run build:fixture
 
-      # Ironclad file injection using EOF to prevent JSON/Bash string corruption
-      - name: Inject Secure Environment Files
-        run: |
-          mkdir -p android/app
-          mkdir -p lib
-          cat << 'EOF' > android/app/google-services.json
-          ${{ secrets.GOOGLE_SERVICES_JSON }}
-          EOF
-          cat << 'EOF' > lib/firebase_options.dart
-          ${{ secrets.FIREBASE_OPTIONS_DART }}
-          EOF
-          cat << 'EOF' > .env
-          ${{ secrets.ENV_FILE }}
-          EOF
+  oracle:
+    name: Native <-> compiled-JS conformance
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: instant
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: instant/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build:core
+      - run: npm run oracle
 
-      - name: Verify formatting
-        run: dart format --output=none --set-exit-if-changed .
+  functions:
+    name: Cloud Functions
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: functions
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - run: npm test
+      - name: Firestore/Functions emulator integration
+        run: npm run test:emulator
 
-      - name: Analyze
-        run: flutter analyze
-
-      - name: Build debug APK
-        run: flutter build apk --debug
+  rules:
+    name: Firestore rules matrix
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: test/rules
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: test/rules/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - run: npm test

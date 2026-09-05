@@ -1,10 +1,10 @@
 // ┌─────────────────────────────────────────────────────────────────────────┐
 // │  ShauchMap — शौच Map                                                    │
-// │  Find the nearest clean public toilet in India.                         │
+// │  A pin is not a promise: separates mapped toilets from current          │
+// │  condition evidence, and says Unknown when it can't know.               │
 // │                                                                         │
 // │  Built by @yodevstudio · github.com/yodevstudio                        │
 // │  Open-source under MIT. If you're reading this — welcome to the code.  │
-// │  Every toilet on this map was put here by someone who gave a damn. ✦   │
 // └─────────────────────────────────────────────────────────────────────────┘
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -23,6 +23,8 @@ import 'firebase_options.dart';
 import 'package:home_widget/home_widget.dart';
 
 import 'services/firestore_service.dart';
+import 'config/rollout_config.dart';
+import 'widgets/evidence_status_label.dart';
 import 'services/notification_service.dart';
 import 'services/custom_haptics_service.dart';
 import 'screens/add_toilet_wizard.dart';
@@ -44,15 +46,7 @@ import 'utils/format.dart';
 import 'widgets/travel_mode_sheet.dart';
 import 'services/app_settings.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart'
-    show
-        GoogleMap,
-        CameraPosition,
-        Marker,
-        MarkerId,
-        Polyline,
-        PolylineId,
-        PatternItem,
-        BitmapDescriptor;
+    show GoogleMap, CameraPosition, Marker, MarkerId, BitmapDescriptor;
 
 @pragma('vm:entry-point')
 void callbackDispatcher() {
@@ -66,100 +60,123 @@ void callbackDispatcher() {
           );
         }
         final position = await Geolocator.getLastKnownPosition();
-        if (position == null) return true;
+        final now = DateTime.now();
+        // location freshness != evidence freshness. An
+        // ACTIONABLE nearby widget suggestion needs a position no older than
+        // the direct-GO cached-location safety horizon (30 s). Anything staler
+        // (or a future timestamp) publishes the non-actionable state. This is
+        // SEPARATE from the Evidence V2 60-minute condition window. WorkManager
+        // may therefore often clear the widget — honesty beats fake proximity,
+        // and a tap always runs a fresh in-app GO. No background-location
+        // permission / continuous tracking is added.
+        if (position == null ||
+            !isGoPositionFresh(
+              position.asGeoPos,
+              now,
+              maxAge: kGoActionableWidgetMaxAge,
+            )) {
+          await publishGoWidgetUnavailable(
+            'Open ShauchMap to refresh nearby suggestions',
+          );
+          return true;
+        }
 
         final fs = FirestoreService();
-        final stream = fs.getToiletsNearby(
-          latitude: position.latitude,
-          longitude: position.longitude,
-          radiusKm: 15.0,
-        );
-        final toilets = await stream.first;
-        final openToilets = toilets.where((t) => t.isOpen).toList();
-
-        if (openToilets.isNotEmpty) {
-          // Sort by distance
-          openToilets.sort((a, b) {
-            final distA = Geolocator.distanceBetween(
-              position.latitude,
-              position.longitude,
-              a.latitude,
-              a.longitude,
-            );
-            final distB = Geolocator.distanceBetween(
-              position.latitude,
-              position.longitude,
-              b.latitude,
-              b.longitude,
-            );
-            return distA.compareTo(distB);
-          });
-
-          // Small widget
-          final nearest = openToilets.first;
-          final minDist = Geolocator.distanceBetween(
-            position.latitude,
-            position.longitude,
-            nearest.latitude,
-            nearest.longitude,
+        // the COMPLETE current-position-centered 15-km
+        // bounded pool (one-shot geo query, deterministically ordered, NO
+        // decision cap), never a map/search stream.
+        List<Toilet> pool;
+        try {
+          pool = await fs
+              .getGoPool(
+                latitude: position.latitude,
+                longitude: position.longitude,
+                radiusKm: 15.0,
+              )
+              .timeout(const Duration(seconds: 10));
+        } catch (_) {
+          await publishGoWidgetUnavailable(
+            'Open ShauchMap to refresh nearby suggestions',
           );
-          int walkMin = (minDist / 80).ceil();
-
-          HomeWidget.saveWidgetData<String>('nearest_loo_name', nearest.name);
-          HomeWidget.saveWidgetData<String>(
-            'nearest_loo_dist',
-            '${formatDistance(minDist)} \u2022 $walkMin min',
-          );
-          HomeWidget.saveWidgetData<String>('toilet_id', nearest.id);
-
-          final now = DateTime.now();
-          final hour = now.hour > 12
-              ? now.hour - 12
-              : (now.hour == 0 ? 12 : now.hour);
-          final ampm = now.hour >= 12 ? 'PM' : 'AM';
-          final minute = now.minute.toString().padLeft(2, '0');
-          final lastUpdated = "Last updated $hour:$minute $ampm";
-          HomeWidget.saveWidgetData<String>('last_updated', lastUpdated);
-
-          HomeWidget.updateWidget(
-            name: 'WidgetProvider',
-            androidName: 'WidgetProvider',
-          );
-
-          // Medium widget
-          for (int i = 0; i < 3; i++) {
-            if (i < openToilets.length) {
-              final t = openToilets[i];
-              final dist = Geolocator.distanceBetween(
-                position.latitude,
-                position.longitude,
-                t.latitude,
-                t.longitude,
-              );
-              int wMin = (dist / 80).ceil();
-              HomeWidget.saveWidgetData<String>('med_${i + 1}_name', t.name);
-              HomeWidget.saveWidgetData<String>(
-                'med_${i + 1}_dist',
-                '${formatDistance(dist)} \u2022 $wMin min',
-              );
-              HomeWidget.saveWidgetData<String>('med_${i + 1}_id', t.id);
-            } else {
-              HomeWidget.saveWidgetData<String>('med_${i + 1}_name', '');
-              HomeWidget.saveWidgetData<String>('med_${i + 1}_dist', '');
-              HomeWidget.saveWidgetData<String>('med_${i + 1}_id', '');
-            }
-          }
-          HomeWidget.updateWidget(
-            name: 'WidgetProviderMedium',
-            androidName: 'WidgetProviderMedium',
-          );
+          return true;
         }
+
+        // the home widget uses the SAME frozen GO V2 engine as the
+        // in-app GO button — no independent nearest-distance ranking here.
+        final decision = resolveGo(
+          toilets: pool,
+          userLat: position.latitude,
+          userLng: position.longitude,
+          now: now,
+        );
+        await publishGoWidgetData(decision, now);
       } catch (e) {
         debugPrint("Workmanager error: $e");
+        // if we can still write widget state, clear stale
+        // actionable ids so an old recommendation does not linger. Narrow
+        // nested guard — if HomeWidget itself is what failed, swallow it.
+        try {
+          await publishGoWidgetUnavailable(
+            'Open ShauchMap to refresh nearby suggestions',
+          );
+        } catch (_) {}
       }
     }
     return true;
   });
+}
+
+/// Writes the home-widget SharedPreferences payload from a GO V2 [decision].
+///
+/// SMALL widget  -> `decision.selected`.
+/// MEDIUM widget -> `decision.selected` then `decision.alternatives` in order
+/// (never a lower-authority toilet from outside the decision result).
+/// `decision.selected == null` -> every stored toilet id/name is CLEARED so a
+/// stale widget tap has no navigation target, and a neutral
+/// "No confident suggestion" is shown.
+///
+/// The refresh label says "Suggestion updated ..." — the time the
+/// *suggestion* was computed, never a claim that a toilet was verified.
+Future<void> publishGoWidgetData(GoDecision decision, DateTime now) async {
+  final hour = now.hour > 12 ? now.hour - 12 : (now.hour == 0 ? 12 : now.hour);
+  final ampm = now.hour >= 12 ? 'PM' : 'AM';
+  final minute = now.minute.toString().padLeft(2, '0');
+  final payload = goWidgetPayload(
+    decision,
+    updatedLabel: 'Suggestion updated $hour:$minute $ampm',
+    now: now,
+    formatMeters: formatDistance,
+  );
+  await _writeWidgetPayload(payload);
+}
+
+/// Publish the "no trustworthy suggestion" widget state: EVERY actionable
+/// id/name cleared, an honest neutral [message]. / .
+Future<void> publishGoWidgetUnavailable(String message) async {
+  final now = DateTime.now();
+  final hour = now.hour > 12 ? now.hour - 12 : (now.hour == 0 ? 12 : now.hour);
+  final ampm = now.hour >= 12 ? 'PM' : 'AM';
+  final minute = now.minute.toString().padLeft(2, '0');
+  await _writeWidgetPayload(
+    goWidgetUnavailablePayload(
+      updatedLabel: 'Suggestion updated $hour:$minute $ampm',
+      message: message,
+    ),
+  );
+}
+
+Future<void> _writeWidgetPayload(Map<String, String> payload) async {
+  for (final entry in payload.entries) {
+    await HomeWidget.saveWidgetData<String>(entry.key, entry.value);
+  }
+  await HomeWidget.updateWidget(
+    name: 'WidgetProvider',
+    androidName: 'WidgetProvider',
+  );
+  await HomeWidget.updateWidget(
+    name: 'WidgetProviderMedium',
+    androidName: 'WidgetProviderMedium',
+  );
 }
 
 Future<void> main() async {
@@ -256,7 +273,99 @@ Future<void> main() async {
   }
 
   await AppSettings.instance.load();
-  runApp(const LooMapApp());
+  runApp(const ShauchMapApp());
+}
+
+/// One GO V2 alternative row inside the GO preview. It preserves the
+/// alternative's own warning / identity state (from `presentGoAlternative`),
+/// never re-derives policy, and shows moderation-flagged options never (the
+/// engine already excludes them).
+class _GoAlternativeRow extends StatelessWidget {
+  final GoAlternative alt;
+  final Color toneColor;
+  final VoidCallback onTap;
+
+  const _GoAlternativeRow({
+    required this.alt,
+    required this.toneColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.sm;
+    final p = presentGoAlternative(alt);
+    final (distNum, unit) = formatDistanceParts(alt.distanceMeters);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(SmTokens.rSmall),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: SmTokens.s8),
+        child: Row(
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: toneColor,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: SmTokens.s12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    alt.toilet.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: SmText.body.copyWith(
+                      color: c.ink,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  if (p.cautions.isEmpty)
+                    Text(
+                      p.headline,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: SmText.caption.copyWith(color: c.ink3),
+                    )
+                  else
+                    // EVERY structured caution from
+                    // presentGoAlternative is rendered before a non-confirming
+                    // alternative tap (identity + unavailable + water + lock) —
+                    // no arbitrary truncation. Compact + wrapping.
+                    for (final line in p.cautions)
+                      Text(
+                        line,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: SmText.caption.copyWith(color: c.ink3),
+                      ),
+                ],
+              ),
+            ),
+            const SizedBox(width: SmTokens.s8),
+            Text(
+              '$distNum$unit',
+              style: SmText.caption.copyWith(color: c.ink2),
+            ),
+            if (alt.requiresConfirmation)
+              Padding(
+                padding: const EdgeInsets.only(left: SmTokens.s4),
+                child: Icon(
+                  Icons.info_outline_rounded,
+                  size: 14,
+                  color: c.ink3,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class RetryScreen extends StatelessWidget {
@@ -359,8 +468,8 @@ void showAppSnackBar(
   );
 }
 
-class LooMapApp extends StatelessWidget {
-  const LooMapApp({super.key});
+class ShauchMapApp extends StatelessWidget {
+  const ShauchMapApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -435,6 +544,11 @@ class _NavigationShellState extends State<NavigationShell>
   String? _userId;
   String? _userName;
   VoidCallback? _onSignInSuccess;
+
+  // guard so the public-profile mirror runs at most ONCE per
+  // uid per app session, no matter how many auth-state callbacks arrive.
+  // Reset on sign-out (and on a mirror failure, to allow a retry next event).
+  String? _publicProfileEnsuredUid;
 
   // Streak
   int _streakCount = 0;
@@ -590,7 +704,7 @@ class _NavigationShellState extends State<NavigationShell>
                             .doc(toiletId)
                             .get();
                         if (doc.exists) {
-                          targetToilet = Toilet.fromFirestore(doc);
+                          targetToilet = toiletFromFirestore(doc);
                         }
                       } catch (_) {}
                     }
@@ -627,13 +741,14 @@ class _NavigationShellState extends State<NavigationShell>
   Future<void> _handleDeepLink(Uri uri) async {
     if (uri.scheme != 'shauchmap') return;
 
+    // BOTH the emergency deep link and a widget/`navigate` deep
+    // link open the app and run a FRESH GO V2 resolution. A stored widget
+    // toilet id is a hint/context only — never authority to Map-launch a
+    // cached recommendation that may now be stale.
     if (uri.host == 'emergency') {
       _startEmergencyFlow();
     } else if (uri.host == 'navigate') {
-      final toiletId = uri.queryParameters['toiletId'];
-      if (toiletId != null && toiletId.isNotEmpty) {
-        _launchToiletNav(toiletId);
-      }
+      _startEmergencyFlow(hintToiletId: uri.queryParameters['toiletId']);
     }
   }
 
@@ -662,7 +777,7 @@ class _NavigationShellState extends State<NavigationShell>
                   ),
                   const SizedBox(height: SmTokens.s16),
                   Text(
-                    'Finding the nearest open toilet…',
+                    'Finding a nearby option…',
                     style: SmText.body.copyWith(color: ctx.sm.ink),
                     textAlign: TextAlign.center,
                   ),
@@ -686,91 +801,299 @@ class _NavigationShellState extends State<NavigationShell>
     }
   }
 
-  void _launchToiletNav(String toiletId) async {
-    if (_isNavigatingFlowActive) {
-      return;
+  // ==========================================================================
+  // GO V2 LIVE RESOLUTION + PREVIEW
+  //
+  // Every GO surface funnels through resolveGo(...) -> the frozen decideGo. The
+  // UI below only FORMATS a GoDecision (via go_presentation.dart); it never
+  // re-ranks. Legacy is_open / ratings / votes / star averages never touch it.
+  // ==========================================================================
+
+  Color _toneColor(BuildContext ctx, GoTone tone) => switch (tone) {
+    GoTone.positive => ctx.sm.statusOpen,
+    GoTone.warning => ctx.sm.statusUnsure,
+    GoTone.neutral => ctx.sm.ink3,
+  };
+
+  double _toneMarkerHue(GoTone tone) => switch (tone) {
+    // Green ONLY for a corroborated-positive selection; otherwise a NEUTRAL
+    // violet pin, or an orange warning pin. Never universal green.
+    GoTone.positive => BitmapDescriptor.hueGreen,
+    GoTone.warning => BitmapDescriptor.hueOrange,
+    GoTone.neutral => BitmapDescriptor.hueViolet,
+  };
+
+  DateTime? _lastGoWidgetRefresh;
+
+  /// Acquire an acceptable CURRENT position for GO. SELF-SUFFICIENT — it
+  /// does its own permission / service gate and never assumes
+  /// `_initLocation()` ran first. Returns null rather than ever handing back
+  /// an arbitrarily stale fix: an unknown current location is safer than a
+  /// confident recommendation for the wrong city. A valid fresh / last-known
+  /// fix also refreshes `_userPosition`.
+  ///
+  /// Each freshness decision reads its OWN `DateTime.now()`.
+  /// The permission prompt can hold the user for a long time, so a single
+  /// captured `now` would let a last-known fix (or even a delayed
+  /// `getCurrentPosition` result) pass its age check against a stale clock.
+  Future<Position?> _acquireGoPosition() async {
+    // A recently-held fix is enough — no permission round-trip needed.
+    final cached = _userPosition;
+    if (cached != null &&
+        isGoPositionFresh(
+          cached.asGeoPos,
+          DateTime.now(),
+          maxAge: kGoCachedPositionMaxAge,
+        )) {
+      return cached;
     }
-    _isNavigatingFlowActive = true;
+
     try {
-      if (_toilets.isEmpty || _userPosition == null || !mounted) {
-        return;
+      if (!await Geolocator.isLocationServiceEnabled()) return null;
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
       }
-      final toilet = _toilets.firstWhereOrNull((t) => t.id == toiletId);
-      if (toilet == null) {
-        if (mounted) {
-          showAppSnackBar('Toilet not found in loaded area', isError: true);
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        return null;
+      }
+
+      final lastKnown = await Geolocator.getLastKnownPosition();
+      if (lastKnown != null &&
+          isGoPositionFresh(
+            lastKnown.asGeoPos,
+            DateTime.now(),
+            maxAge: kGoLastKnownMaxAge,
+          )) {
+        _userPosition = lastKnown;
+        return lastKnown;
+      }
+
+      _showEmergencyDialog();
+      try {
+        final position = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.medium,
+            timeLimit: Duration(seconds: 4),
+          ),
+        );
+        // Even a "current" fix is validated against a FRESH clock — the GO
+        // trust boundary does not assume the platform returns something
+        // instantaneous. Must be <= the cached-position horizon (10 s).
+        if (!isGoPositionFresh(
+          position.asGeoPos,
+          DateTime.now(),
+          maxAge: kGoCachedPositionMaxAge,
+        )) {
+          return null;
         }
-        return;
+        _userPosition = position;
+        return position;
+      } finally {
+        _dismissEmergencyDialog();
       }
-      final dist = Geolocator.distanceBetween(
-        _userPosition!.latitude,
-        _userPosition!.longitude,
-        toilet.latitude,
-        toilet.longitude,
-      );
-      final selectedMode = await showTravelModeSheet(
-        context,
-        distanceMeters: dist,
-      );
-      if (selectedMode == null) {
-        return;
-      }
-      if (!mounted) {
-        return;
-      }
-
-      int etaSeconds;
-      if (selectedMode == TravelMode.driving) {
-        etaSeconds = (dist / 11.1).round();
-      } else if (selectedMode == TravelMode.bicycling) {
-        etaSeconds = (dist / 4.1).round();
-      } else {
-        etaSeconds = (dist / 1.4).round();
-      }
-
-      _dismissEmergencyDialog();
-
-      await MapLauncher.launch(
-        destination: LatLng(toilet.latitude, toilet.longitude),
-        toiletName: toilet.name,
-        toiletId: toilet.id,
-        etaSeconds: etaSeconds,
-        mode: selectedMode,
-      );
     } catch (_) {
-      if (mounted) {
-        showAppSnackBar('Toilet not found in loaded area', isError: true);
-      }
-    } finally {
-      _isNavigatingFlowActive = false;
+      // Permission / service / platform / timeout errors — no stale
+      // fallback. The caller shows the honest 'cannot locate' path.
       _dismissEmergencyDialog();
+      return null;
     }
   }
 
-  Future<void> _showGoPreviewSheet(
-    BuildContext ctx,
-    Toilet nearest,
-    double distMeters,
-  ) async {
-    final userLatLng = LatLng(
-      _userPosition!.latitude,
-      _userPosition!.longitude,
-    );
-    final toiletLatLng = LatLng(nearest.latitude, nearest.longitude);
-    final midPoint = LatLng(
-      (userLatLng.latitude + toiletLatLng.latitude) / 2,
-      (userLatLng.longitude + toiletLatLng.longitude) / 2,
-    );
-    final walkMin = (distMeters / 80).ceil();
+  /// Load the COMPLETE 15-km bounded GO candidate pool centered on [position] —
+  /// NEVER the map viewport, search destination, `_viewingLat/_viewingLng`, or
+  /// the stale map stream, and NO pre-engine decision cap. Returns
+  /// null on failure; the caller must NOT fall back to `_toilets`.
+  Future<List<Toilet>?> _loadGoPoolAt(GeoPos position) async {
+    try {
+      return await _firestoreService
+          .getGoPool(
+            latitude: position.latitude,
+            longitude: position.longitude,
+            radiusKm: 15.0,
+          )
+          .timeout(const Duration(seconds: 8));
+    } catch (_) {
+      return null;
+    }
+  }
 
-    await showModalBottomSheet(
-      context: ctx,
+  /// the GO core is platform-free. Acquire a geolocator `Position`
+  /// (also used by the map/widget) then hand GO a plain `GeoPos`.
+  Future<GeoPos?> _acquireGoPos() async =>
+      (await _acquireGoPosition())?.asGeoPos;
+
+  /// Resolve against an EXPLICIT current-user pool + position. Returns a
+  /// GoResolutionSnapshot carrying the exact position used, the decision,
+  /// and the `now` it was resolved at .
+  GoResolutionSnapshot _resolveGoFor(List<Toilet> pool, GeoPos pos) {
+    final now = DateTime.now();
+    return (
+      position: pos,
+      decision: resolveGo(
+        toilets: pool,
+        userLat: pos.latitude,
+        userLng: pos.longitude,
+        now: now,
+      ),
+      now: now,
+    );
+  }
+
+  /// Route a fresh GoDecision to the right surface. [hintToiletId] (from a
+  /// widget/deep-link tap) is a HINT only: it is honoured ONLY when it
+  /// resolves to a NON-selected alternative in the FRESH active tier; a hint
+  /// that is the fresh selected, or is absent / flagged / dropped, falls
+  /// through to the normal selected preview. Identity authority /
+  /// confirmation / warnings / moderation / revalidation are never bypassed.
+  Future<void> _presentGoResult(
+    GoResolutionSnapshot snapshot, {
+    String? hintToiletId,
+  }) async {
+    if (!mounted) return;
+    final decision = snapshot.decision;
+    if (decision.selected == null) {
+      final action = await _showGoNullSheet(decision);
+      if (action == GoNullAction.retry) {
+        await _startEmergencyFlow();
+      } else if (action == GoNullAction.browse && mounted) {
+        setState(() => _selectedTabIndex = 0);
+      }
+      return;
+    }
+    final focus = resolveHintFocus(decision, hintToiletId, now: snapshot.now);
+    await _showGoPreviewSheet(snapshot, focus: focus);
+  }
+
+  // ---- travel-mode + Maps launch (shared) --------------------------------
+  Future<void> _launchGoNavigation(Toilet toilet, double distMeters) async {
+    if (!mounted) return;
+    final selectedMode = await showTravelModeSheet(
+      context,
+      distanceMeters: distMeters,
+    );
+    if (selectedMode == null || !mounted) return;
+    final etaSeconds = selectedMode == TravelMode.driving
+        ? (distMeters / 11.1).round()
+        : selectedMode == TravelMode.bicycling
+        ? (distMeters / 4.1).round()
+        : (distMeters / 1.4).round();
+    await MapLauncher.launch(
+      destination: LatLng(toilet.latitude, toilet.longitude),
+      toiletName: toilet.name,
+      toiletId: toilet.id,
+      etaSeconds: etaSeconds,
+      mode: selectedMode,
+    );
+  }
+
+  /// navigation-time revalidation. A GO decision is a time-dependent
+  /// snapshot; evidence / moderation can expire while the preview is open.
+  ///
+  /// PRIMARY: if the fresh selected id is unchanged and the confirmation
+  /// contract is not materially stronger, navigate to the FRESH result.
+  /// Otherwise refresh the preview and tell the user.
+  ///
+  /// ALTERNATIVE ([alternativeId] set): the chosen toilet must still be in the
+  /// fresh decision's active tier (selected or alternatives); else refresh.
+  Future<void> _revalidateAndNavigate(
+    GoResolutionSnapshot stale, {
+    String? alternativeId,
+  }) async {
+    if (!mounted) return;
+    // Revalidation builds a completely NEW snapshot: reacquired current
+    // position + freshly-loaded current-user GO pool. Never `_toilets` /
+    // a search pool.
+    final pos = await _acquireGoPos();
+    if (pos == null) {
+      if (mounted) {
+        showAppSnackBar(
+          'Cannot confirm your location right now',
+          isError: true,
+        );
+      }
+      return;
+    }
+    final pool = await _loadGoPoolAt(pos);
+    if (pool == null) {
+      if (mounted) {
+        showAppSnackBar(
+          "Couldn't refresh nearby toilets. Try again.",
+          isError: true,
+        );
+      }
+      return;
+    }
+    final r = _resolveGoFor(pool, pos);
+    final fresh = r.decision;
+    final String? wantId = alternativeId ?? fresh.selected?.id;
+
+    // ONE decision point. Confirmation (if any) happens here,
+    // once, on FRESH metadata — the preview's primary CTA does NOT pre-confirm.
+    switch (goRevalidationOutcome(stale, r, targetId: alternativeId)) {
+      case GoRevalidationOutcome.refreshSuggestion:
+        if (mounted) {
+          showAppSnackBar(
+            'Nearby evidence changed. GO refreshed your suggestion.',
+          );
+        }
+        await _presentGoResult(r);
+        return;
+
+      case GoRevalidationOutcome.refreshOption:
+        if (mounted) {
+          showAppSnackBar('Nearby evidence changed. GO refreshed this option.');
+        }
+        final freshTarget = wantId == null
+            ? null
+            : findInActiveTier(fresh, wantId, now: r.now);
+        await _showGoPreviewSheet(
+          r,
+          focus: (alternativeId != null) ? freshTarget : null,
+        );
+        return;
+
+      case GoRevalidationOutcome.confirmThenLaunch:
+        final freshTarget = findInActiveTier(fresh, wantId!, now: r.now)!;
+        final ok = await _confirmGoNavigation(
+          presentGoAlternative(goAlternativeFromTarget(freshTarget)),
+          freshTarget.toilet,
+          freshTarget.distanceMeters,
+        );
+        if (ok != true || !mounted) return;
+        await _launchGoNavigation(
+          freshTarget.toilet,
+          freshTarget.distanceMeters,
+        );
+        return;
+
+      case GoRevalidationOutcome.launch:
+        final freshTarget = findInActiveTier(fresh, wantId!, now: r.now)!;
+        await _launchGoNavigation(
+          freshTarget.toilet,
+          freshTarget.distanceMeters,
+        );
+        return;
+    }
+  }
+
+  /// Confirmation sheet shown BEFORE MapLauncher whenever requiresConfirmation.
+  /// The warning/cautions appear ABOVE the primary action. Returns true only on
+  /// an explicit "Navigate anyway" tap.
+  Future<bool?> _confirmGoNavigation(
+    GoPresentation p,
+    Toilet toilet,
+    double distMeters,
+  ) {
+    return showModalBottomSheet<bool>(
+      context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (sheetCtx) {
-        final c = ctx.sm;
+        final c = sheetCtx.sm;
         return Container(
-          decoration: smSheetDecoration(ctx),
+          decoration: smSheetDecoration(sheetCtx),
           child: SafeArea(
             top: false,
             child: Padding(
@@ -786,233 +1109,56 @@ class _NavigationShellState extends State<NavigationShell>
                 children: [
                   const Center(child: SmGrabHandle()),
                   const SizedBox(height: SmTokens.s12),
-                  const SmEyebrow('NEAREST USABLE TOILET · RIGHT NOW'),
-                  const SizedBox(height: SmTokens.s12),
-                  // Mini-map
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(SmTokens.rCard),
-                    child: SizedBox(
-                      height: 150,
-                      child: GoogleMap(
-                        initialCameraPosition: CameraPosition(
-                          target: midPoint,
-                          zoom: 15,
-                        ),
-                        liteModeEnabled: true,
-                        zoomGesturesEnabled: false,
-                        scrollGesturesEnabled: false,
-                        rotateGesturesEnabled: false,
-                        tiltGesturesEnabled: false,
-                        myLocationButtonEnabled: false,
-                        zoomControlsEnabled: false,
-                        markers: {
-                          Marker(
-                            markerId: const MarkerId('user'),
-                            position: userLatLng,
-                            icon: BitmapDescriptor.defaultMarkerWithHue(
-                              BitmapDescriptor.hueAzure,
-                            ),
-                          ),
-                          Marker(
-                            markerId: const MarkerId('toilet'),
-                            position: toiletLatLng,
-                            icon: BitmapDescriptor.defaultMarkerWithHue(
-                              BitmapDescriptor.hueGreen,
-                            ),
-                          ),
-                        },
-                        polylines: {
-                          Polyline(
-                            polylineId: const PolylineId('route'),
-                            points: [userLatLng, toiletLatLng],
-                            color: c.brandSolid,
-                            width: 3,
-                            patterns: [
-                              PatternItem.dash(12),
-                              PatternItem.gap(8),
-                            ],
-                          ),
-                        },
-                      ),
+                  SmEyebrow(p.headline.toUpperCase()),
+                  const SizedBox(height: SmTokens.s8),
+                  Text(
+                    toilet.name,
+                    style: SmText.subhead.copyWith(
+                      color: c.ink,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
-                  const SizedBox(height: SmTokens.s16),
-                  // Hero distance + name + status + walk time
-                  Builder(
-                    builder: (context) {
-                      final (goNum, goUnit) = formatDistanceParts(distMeters);
-                      return Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.baseline,
-                            textBaseline: TextBaseline.alphabetic,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                goNum,
-                                style: SmText.hero.copyWith(
-                                  color: c.ink,
-                                  height: 1.0,
-                                ),
-                              ),
-                              const SizedBox(width: 2),
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 6),
-                                child: Text(
-                                  goUnit,
-                                  style: SmText.subhead.copyWith(color: c.ink2),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(width: SmTokens.s16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  nearest.name,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: SmText.subhead.copyWith(
-                                    color: c.ink,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                                const SizedBox(height: SmTokens.s4),
-                                const SizedBox(height: SmTokens.s4),
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    SmStatusLabel(
-                                      nearest.isOpen
-                                          ? SmStatus.open
-                                          : SmStatus.closed,
-                                    ),
-                                    const SizedBox(width: SmTokens.s8),
-                                    Icon(
-                                      Icons.directions_walk,
-                                      size: 14,
-                                      color: c.ink3,
-                                    ),
-                                    const SizedBox(width: 2),
-                                    Text(
-                                      '$walkMin min',
-                                      style: SmText.caption.copyWith(
-                                        color: c.ink2,
-                                      ),
-                                    ),
-                                    if (nearest.totalRatings > 0) ...[
-                                      const SizedBox(width: SmTokens.s8),
-                                      Text(
-                                        '★ ${nearest.starRating.toStringAsFixed(1)}',
-                                        style: SmText.caption.copyWith(
-                                          color: c.ink2,
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      );
-                    },
+                  const SizedBox(height: SmTokens.s8),
+                  Text(
+                    p.explanation,
+                    style: SmText.body.copyWith(color: c.ink2),
                   ),
+                  if (p.cautions.isNotEmpty) ...[
+                    const SizedBox(height: SmTokens.s12),
+                    for (final line in p.cautions)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: SmTokens.s4),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.info_outline_rounded,
+                              size: 15,
+                              color: _toneColor(sheetCtx, GoTone.warning),
+                            ),
+                            const SizedBox(width: SmTokens.s8),
+                            Expanded(
+                              child: Text(
+                                line,
+                                style: SmText.caption.copyWith(color: c.ink2),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
                   const SizedBox(height: SmTokens.s16),
                   SmPrimaryButton(
-                    label: 'Navigate in Maps',
+                    label: p.primaryCta ?? 'Navigate anyway',
                     icon: Icons.near_me_rounded,
-                    onTap: () async {
-                      Navigator.of(sheetCtx).pop();
-                      if (!mounted) {
-                        return;
-                      }
-                      final selectedMode = await showTravelModeSheet(
-                        ctx,
-                        distanceMeters: distMeters,
-                      );
-                      if (selectedMode == null || !mounted) return;
-                      final etaSeconds = selectedMode == TravelMode.driving
-                          ? (distMeters / 11.1).round()
-                          : selectedMode == TravelMode.bicycling
-                          ? (distMeters / 4.1).round()
-                          : (distMeters / 1.4).round();
-                      await MapLauncher.launch(
-                        destination: toiletLatLng,
-                        toiletName: nearest.name,
-                        toiletId: nearest.id,
-                        etaSeconds: etaSeconds,
-                        mode: selectedMode,
-                      );
-                    },
+                    onTap: () => Navigator.of(sheetCtx).pop(true),
                   ),
-                  const SizedBox(height: SmTokens.s12),
-                  GestureDetector(
-                    onTap: () async {
-                      Navigator.of(sheetCtx).pop();
-                      if (!mounted) {
-                        return;
-                      }
-                      await showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.transparent,
-                        builder: (_) => FractionallySizedBox(
-                          heightFactor: 0.92,
-                          child: ClipRRect(
-                            borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(SmTokens.rSheet),
-                            ),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: context.sm.surface,
-                                border: Border.all(
-                                  color: context.sm.line,
-                                  width: 1,
-                                ),
-                              ),
-                              child: Column(
-                                children: [
-                                  const SmGrabHandle(),
-                                  Expanded(
-                                    child: ListScreen(
-                                      toilets: _toilets,
-                                      firestoreService: _firestoreService,
-                                      isSignedIn: _isSignedIn,
-                                      userId: _userId,
-                                      userName: _userName,
-                                      onSignInRequest: () =>
-                                          _triggerSignInGating(() {}),
-                                      onRefreshToilets: () => setState(() {}),
-                                      userPosition: _userPosition,
-                                      searchMode: false,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                    child: Text.rich(
-                      TextSpan(
-                        text: 'Need something specific?  ',
-                        style: SmText.caption.copyWith(color: c.ink3),
-                        children: [
-                          TextSpan(
-                            text: 'Alternatives ↑',
-                            style: SmText.caption.copyWith(
-                              color: c.brand,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-                      textAlign: TextAlign.center,
+                  const SizedBox(height: SmTokens.s8),
+                  TextButton(
+                    onPressed: () => Navigator.of(sheetCtx).pop(false),
+                    child: Text(
+                      p.secondaryCta ?? 'Choose another option',
+                      style: SmText.body.copyWith(color: c.ink2),
                     ),
                   ),
                 ],
@@ -1024,7 +1170,424 @@ class _NavigationShellState extends State<NavigationShell>
     );
   }
 
+  /// Null-result sheet: NO Navigate action. The engine deliberately returned
+  /// no selection, so GO must not silently pick a nearest-by-distance record.
+  /// Returns the user's chosen action AFTER the sheet closes, so the caller
+  /// can fully release the active flow before starting a new resolution
+  /// .
+  Future<GoNullAction> _showGoNullSheet(GoDecision decision) async {
+    final p = presentGoDecision(decision);
+    if (!mounted) return GoNullAction.dismiss;
+    final result = await showModalBottomSheet<GoNullAction>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (sheetCtx) {
+        final c = sheetCtx.sm;
+        return Container(
+          decoration: smSheetDecoration(sheetCtx),
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                SmTokens.s20,
+                SmTokens.s8,
+                SmTokens.s20,
+                SmTokens.s24,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Center(child: SmGrabHandle()),
+                  const SizedBox(height: SmTokens.s12),
+                  SmEyebrow(p.headline.toUpperCase()),
+                  const SizedBox(height: SmTokens.s8),
+                  Text(
+                    p.explanation,
+                    style: SmText.body.copyWith(color: c.ink2),
+                  ),
+                  for (final line in p.cautions)
+                    Padding(
+                      padding: const EdgeInsets.only(top: SmTokens.s8),
+                      child: Text(
+                        line,
+                        style: SmText.caption.copyWith(color: c.ink3),
+                      ),
+                    ),
+                  const SizedBox(height: SmTokens.s16),
+                  SmPrimaryButton(
+                    label: p.secondaryCta == 'Retry' ? 'Retry' : 'Browse map',
+                    icon: p.secondaryCta == 'Retry'
+                        ? Icons.refresh_rounded
+                        : Icons.map_rounded,
+                    onTap: () => Navigator.of(sheetCtx).pop(
+                      p.secondaryCta == 'Retry'
+                          ? GoNullAction.retry
+                          : GoNullAction.browse,
+                    ),
+                  ),
+                  if (p.secondaryCta == 'Retry') ...[
+                    const SizedBox(height: SmTokens.s8),
+                    TextButton(
+                      onPressed: () =>
+                          Navigator.of(sheetCtx).pop(GoNullAction.browse),
+                      child: Text(
+                        'Browse map',
+                        style: SmText.body.copyWith(color: c.ink2),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+    return result ?? GoNullAction.dismiss;
+  }
+
+  /// [focus] set => the sheet is centred on a widget/deep-link HINT target
+  /// (a fresh non-selected alternative) instead of `decision.selected`.
+  /// Copy/tone/confirmation come from the focus target's REAL authority +
+  /// condition .
+  Future<void> _showGoPreviewSheet(
+    GoResolutionSnapshot snapshot, {
+    GoTarget? focus,
+  }) async {
+    final decision = snapshot.decision;
+    final toilet = focus?.toilet ?? decision.selected!;
+    final distMeters =
+        focus?.distanceMeters ?? decision.selectedDistanceMeters ?? 0;
+    final GoPresentation p = focus != null
+        ? presentGoAlternative(goAlternativeFromTarget(focus))
+        : presentGoDecision(
+            decision,
+            selectedIdentity: decision.selected!.truth.identityStatus,
+          );
+    final altList = decision.alternatives
+        .where((a) => a.toilet.id != focus?.toilet.id)
+        .toList();
+    // the origin is the EXACT position this decision was
+    // resolved from — never a later mutation of `_userPosition`.
+    final userLatLng = LatLng(
+      snapshot.position.latitude,
+      snapshot.position.longitude,
+    );
+    final toiletLatLng = LatLng(toilet.latitude, toilet.longitude);
+    final midPoint = LatLng(
+      (userLatLng.latitude + toiletLatLng.latitude) / 2,
+      (userLatLng.longitude + toiletLatLng.longitude) / 2,
+    );
+
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (sheetCtx) {
+        final c = sheetCtx.sm;
+        final toneColor = _toneColor(sheetCtx, p.tone);
+        return Container(
+          decoration: smSheetDecoration(sheetCtx),
+          child: SafeArea(
+            top: false,
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  SmTokens.s20,
+                  SmTokens.s8,
+                  SmTokens.s20,
+                  SmTokens.s24,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Center(child: SmGrabHandle()),
+                    const SizedBox(height: SmTokens.s12),
+                    SmEyebrow(p.headline.toUpperCase()),
+                    const SizedBox(height: SmTokens.s12),
+                    // Mini-map: a STRAIGHT-LINE context view. No polyline (that
+                    // would imply a calculated walking route). Selected marker
+                    // is neutral unless corroborated-positive evidence backs it.
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(SmTokens.rCard),
+                      child: SizedBox(
+                        height: 140,
+                        child: GoogleMap(
+                          initialCameraPosition: CameraPosition(
+                            target: midPoint,
+                            zoom: 14.5,
+                          ),
+                          liteModeEnabled: true,
+                          zoomGesturesEnabled: false,
+                          scrollGesturesEnabled: false,
+                          rotateGesturesEnabled: false,
+                          tiltGesturesEnabled: false,
+                          myLocationButtonEnabled: false,
+                          zoomControlsEnabled: false,
+                          markers: {
+                            Marker(
+                              markerId: const MarkerId('user'),
+                              position: userLatLng,
+                              icon: BitmapDescriptor.defaultMarkerWithHue(
+                                BitmapDescriptor.hueAzure,
+                              ),
+                            ),
+                            Marker(
+                              markerId: const MarkerId('toilet'),
+                              position: toiletLatLng,
+                              icon: BitmapDescriptor.defaultMarkerWithHue(
+                                _toneMarkerHue(p.tone),
+                              ),
+                            ),
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: SmTokens.s16),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Builder(
+                          builder: (_) {
+                            final (goNum, goUnit) = formatDistanceParts(
+                              distMeters,
+                            );
+                            return Row(
+                              crossAxisAlignment: CrossAxisAlignment.baseline,
+                              textBaseline: TextBaseline.alphabetic,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  goNum,
+                                  style: SmText.hero.copyWith(
+                                    color: c.ink,
+                                    height: 1.0,
+                                  ),
+                                ),
+                                const SizedBox(width: 2),
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 6),
+                                  child: Text(
+                                    goUnit,
+                                    style: SmText.subhead.copyWith(
+                                      color: c.ink2,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                        const SizedBox(width: SmTokens.s16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                toilet.name,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: SmText.subhead.copyWith(
+                                  color: c.ink,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: SmTokens.s4),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  EvidenceStatusLabel(toilet),
+                                  const SizedBox(width: SmTokens.s8),
+                                  Text(
+                                    'straight-line',
+                                    style: SmText.caption.copyWith(
+                                      color: c.ink3,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: SmTokens.s12),
+                    // WHY this option (from the frozen engine, no re-ranking).
+                    Container(
+                      padding: const EdgeInsets.all(SmTokens.s12),
+                      decoration: BoxDecoration(
+                        color: toneColor.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(SmTokens.rSmall),
+                      ),
+                      child: Text(
+                        p.explanation,
+                        style: SmText.caption.copyWith(color: c.ink2),
+                      ),
+                    ),
+                    for (final line in p.cautions)
+                      Padding(
+                        padding: const EdgeInsets.only(top: SmTokens.s8),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.info_outline_rounded,
+                              size: 15,
+                              color: _toneColor(sheetCtx, GoTone.warning),
+                            ),
+                            const SizedBox(width: SmTokens.s8),
+                            Expanded(
+                              child: Text(
+                                line,
+                                style: SmText.caption.copyWith(color: c.ink2),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    const SizedBox(height: SmTokens.s16),
+                    SmPrimaryButton(
+                      label: p.primaryCta ?? 'Navigate in Maps',
+                      icon: Icons.near_me_rounded,
+                      onTap: () async {
+                        Navigator.of(sheetCtx).pop();
+                        if (!mounted) return;
+                        // NO pre-confirmation on stale metadata.
+                        // Revalidation is the single decision point — it shows
+                        // the one confirmation (on FRESH metadata) if needed.
+                        await _revalidateAndNavigate(
+                          snapshot,
+                          alternativeId: (focus != null && !focus.isSelected)
+                              ? focus.toilet.id
+                              : null,
+                        );
+                      },
+                    ),
+                    if (focus != null) ...[
+                      const SizedBox(height: SmTokens.s8),
+                      TextButton(
+                        onPressed: () async {
+                          Navigator.of(sheetCtx).pop();
+                          if (!mounted) return;
+                          await _showGoPreviewSheet(snapshot);
+                        },
+                        child: Text(
+                          "GO's top pick: ${decision.selected!.name}",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: SmText.caption.copyWith(color: c.ink2),
+                        ),
+                      ),
+                    ],
+                    if (altList.isNotEmpty) ...[
+                      const SizedBox(height: SmTokens.s16),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: SmEyebrow('OTHER NEARBY GO OPTIONS'),
+                      ),
+                      const SizedBox(height: SmTokens.s8),
+                      for (final alt in altList)
+                        _GoAlternativeRow(
+                          alt: alt,
+                          toneColor: _toneColor(
+                            sheetCtx,
+                            presentGoAlternative(alt).tone,
+                          ),
+                          onTap: () async {
+                            Navigator.of(sheetCtx).pop();
+                            if (!mounted) return;
+                            await _revalidateAndNavigate(
+                              snapshot,
+                              alternativeId: alt.toilet.id,
+                            );
+                          },
+                        ),
+                    ],
+                    const SizedBox(height: SmTokens.s12),
+                    GestureDetector(
+                      onTap: () async {
+                        Navigator.of(sheetCtx).pop();
+                        if (!mounted) return;
+                        await _showBrowseAllToilets();
+                      },
+                      child: Text.rich(
+                        TextSpan(
+                          text: 'Looking for something specific?  ',
+                          style: SmText.caption.copyWith(color: c.ink3),
+                          children: [
+                            TextSpan(
+                              text: 'Browse all toilets ↑',
+                              style: SmText.caption.copyWith(
+                                color: c.brand,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showBrowseAllToilets() async {
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => FractionallySizedBox(
+        heightFactor: 0.92,
+        child: ClipRRect(
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(SmTokens.rSheet),
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: context.sm.surface,
+              border: Border.all(color: context.sm.line, width: 1),
+            ),
+            child: Column(
+              children: [
+                const SmGrabHandle(),
+                Expanded(
+                  child: ListScreen(
+                    toilets: _toilets,
+                    firestoreService: _firestoreService,
+                    isSignedIn: _isSignedIn,
+                    userId: _userId,
+                    userName: _userName,
+                    onSignInRequest: () => _triggerSignInGating(() {}),
+                    onRefreshToilets: () => setState(() {}),
+                    userPosition: _userPosition,
+                    searchMode: false,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   void _startAddToiletFlow() {
+    // rollout gate: native Truth V2 creation is paused in this release
+    // (see RolloutConfig.addToiletEnabled). Honest UX only — the server
+    // rules are the actual enforcement.
+    if (!RolloutConfig.addToiletEnabled) {
+      showAppSnackBar(RolloutConfig.addToiletPausedMessage);
+      return;
+    }
     if (!_isSignedIn || _userId == null) {
       _triggerSignInGating(() {});
       return;
@@ -1042,155 +1605,81 @@ class _NavigationShellState extends State<NavigationShell>
     );
   }
 
-  Future<void> _startEmergencyFlow() async {
-    if (_isNavigatingFlowActive) {
-      return;
-    }
+  Future<void> _startEmergencyFlow({String? hintToiletId}) async {
+    // The guard blocks SIMULTANEOUS duplicate flows (e.g. a double GO tap).
+    // Retry from the no-suggestion sheet loops WITHIN this guarded region;
+    // it is not a re-entrant call.
+    if (_isNavigatingFlowActive) return;
     _isNavigatingFlowActive = true;
+    bool retried = false;
+    GoResolutionSnapshot? preview;
     try {
-      // COLD-START GPS SAFETY GATE
-      // Try last-known first — avoids the loader entirely when position is fresh.
-      final posAge = _userPosition != null
-          ? DateTime.now().difference(_userPosition!.timestamp).inSeconds
-          : 999;
-      if (posAge > 10) {
-        final lastKnown = await Geolocator.getLastKnownPosition();
-        if (lastKnown != null &&
-            DateTime.now().difference(lastKnown.timestamp).inSeconds < 30) {
-          _userPosition = lastKnown;
-        } else {
-          // Last-known is stale or absent — show loader and fetch fresh.
-          _showEmergencyDialog();
-          try {
-            final position = await Geolocator.getCurrentPosition(
-              locationSettings: const LocationSettings(
-                accuracy: LocationAccuracy.medium,
-                timeLimit: Duration(seconds: 4),
-              ),
-            );
-            _userPosition = position;
-          } catch (_) {
-            _userPosition = lastKnown ?? _userPosition;
-          }
+      preview = await runGoFlowLoop(
+        acquire: _acquireGoPos,
+        loadPool: (pos) async {
+          final pool = await _loadGoPoolAt(pos);
           _dismissEmergencyDialog();
-        }
-      }
-
-      if (_userPosition == null || _toilets.isEmpty) {
-        if (mounted) {
-          showAppSnackBar('Cannot locate nearest loo right now', isError: true);
-        }
-        return;
-      }
-
-      Toilet? nearest;
-      double minDistance = double.infinity;
-      for (final t in _toilets) {
-        if (!t.isOpen) {
-          continue;
-        }
-        final dist = Geolocator.distanceBetween(
-          _userPosition!.latitude,
-          _userPosition!.longitude,
-          t.latitude,
-          t.longitude,
-        );
-        if (dist < minDistance) {
-          minDistance = dist;
-          nearest = t;
-        }
-      }
-
-      if (nearest != null && mounted) {
-        _dismissEmergencyDialog();
-        await _showGoPreviewSheet(context, nearest, minDistance);
-      }
+          return pool;
+        },
+        resolve: _resolveGoFor,
+        showNull: (d) async {
+          final a = await _showGoNullSheet(d);
+          if (a == GoNullAction.retry) retried = true;
+          if (a == GoNullAction.browse && mounted) {
+            setState(() => _selectedTabIndex = 0);
+          }
+          return a;
+        },
+        onError: (m) {
+          if (mounted) showAppSnackBar(m, isError: true);
+        },
+      );
     } finally {
       _isNavigatingFlowActive = false;
       _dismissEmergencyDialog();
     }
+    // Guard released: the preview's own revalidation / retry can now start a
+    // fresh guarded flow. A stale hint is never carried across a retry.
+    if (preview != null && mounted) {
+      await _presentGoResult(
+        preview,
+        hintToiletId: retried ? null : hintToiletId,
+      );
+    }
   }
 
-  void _updateWidgetWithNearestToilet() {
-    if (_userPosition == null || _toilets.isEmpty) return;
+  void _updateWidgetWithNearestToilet() => unawaited(_refreshGoWidget());
 
-    final openToilets = _toilets.where((t) => t.isOpen).toList();
-    if (openToilets.isEmpty) return;
-
-    openToilets.sort((a, b) {
-      final distA = Geolocator.distanceBetween(
-        _userPosition!.latitude,
-        _userPosition!.longitude,
-        a.latitude,
-        a.longitude,
-      );
-      final distB = Geolocator.distanceBetween(
-        _userPosition!.latitude,
-        _userPosition!.longitude,
-        b.latitude,
-        b.longitude,
-      );
-      return distA.compareTo(distB);
-    });
-
-    final nearest = openToilets.first;
-    final minDist = Geolocator.distanceBetween(
-      _userPosition!.latitude,
-      _userPosition!.longitude,
-      nearest.latitude,
-      nearest.longitude,
-    );
-    int walkMin = (minDist / 80).ceil();
-
-    // Small widget
-    HomeWidget.saveWidgetData<String>('nearest_loo_name', nearest.name);
-    HomeWidget.saveWidgetData<String>(
-      'nearest_loo_dist',
-      '${formatDistance(minDist)} \u2022 $walkMin min',
-    );
-    HomeWidget.saveWidgetData<String>('toilet_id', nearest.id);
-
+  /// Foreground home-widget refresh. Uses a CURRENT-USER-centered bounded GO
+  /// pool (never `_toilets` / a search pool), throttled to avoid a geo query
+  /// on every map stream tick. A missing / stale position or an empty pool
+  /// publishes the honest no-suggestion state and CLEARS every stale id
+  /// .
+  Future<void> _refreshGoWidget({bool force = false}) async {
     final now = DateTime.now();
-    final hour = now.hour > 12
-        ? now.hour - 12
-        : (now.hour == 0 ? 12 : now.hour);
-    final ampm = now.hour >= 12 ? 'PM' : 'AM';
-    final minute = now.minute.toString().padLeft(2, '0');
-    final lastUpdated = "Last updated $hour:$minute $ampm";
-    HomeWidget.saveWidgetData<String>('last_updated', lastUpdated);
-
-    HomeWidget.updateWidget(
-      name: 'WidgetProvider',
-      androidName: 'WidgetProvider',
-    );
-
-    // Medium widget
-    for (int i = 0; i < 3; i++) {
-      if (i < openToilets.length) {
-        final t = openToilets[i];
-        final dist = Geolocator.distanceBetween(
-          _userPosition!.latitude,
-          _userPosition!.longitude,
-          t.latitude,
-          t.longitude,
-        );
-        int wMin = (dist / 80).ceil();
-        HomeWidget.saveWidgetData<String>('med_${i + 1}_name', t.name);
-        HomeWidget.saveWidgetData<String>(
-          'med_${i + 1}_dist',
-          '${formatDistance(dist)} \u2022 $wMin min',
-        );
-        HomeWidget.saveWidgetData<String>('med_${i + 1}_id', t.id);
-      } else {
-        HomeWidget.saveWidgetData<String>('med_${i + 1}_name', '');
-        HomeWidget.saveWidgetData<String>('med_${i + 1}_dist', '');
-        HomeWidget.saveWidgetData<String>('med_${i + 1}_id', '');
-      }
+    if (!force &&
+        _lastGoWidgetRefresh != null &&
+        now.difference(_lastGoWidgetRefresh!) < const Duration(seconds: 60)) {
+      return;
     }
-    HomeWidget.updateWidget(
-      name: 'WidgetProviderMedium',
-      androidName: 'WidgetProviderMedium',
-    );
+    _lastGoWidgetRefresh = now;
+
+    // an ACTIONABLE widget suggestion needs a position no
+    // older than 30 s (kGoActionableWidgetMaxAge) — NOT the 60-minute
+    // Evidence V2 condition window. Otherwise clear every actionable id.
+    final pos = _userPosition?.asGeoPos;
+    if (pos == null ||
+        !isGoPositionFresh(pos, now, maxAge: kGoActionableWidgetMaxAge)) {
+      await publishGoWidgetUnavailable('Open ShauchMap to refresh');
+      return;
+    }
+    final pool = await _loadGoPoolAt(pos);
+    if (pool == null || pool.isEmpty) {
+      await publishGoWidgetUnavailable('Open ShauchMap to refresh');
+      return;
+    }
+    final r = _resolveGoFor(pool, pos);
+    await publishGoWidgetData(r.decision, r.now);
   }
 
   @override
@@ -1254,6 +1743,10 @@ class _NavigationShellState extends State<NavigationShell>
       _isSignedIn = true;
       _userId = currentUser.uid;
       _userName = currentUser.displayName;
+      // A persisted session is already present at startup (silent resume).
+      // This is the exact path that must also ensure the public leaderboard
+      // row — otherwise a later points award creates a nameless doc.
+      _ensurePublicProfileFor(currentUser);
     }
     _authSubscription = FirebaseAuth.instance.authStateChanges().listen((
       User? user,
@@ -1270,9 +1763,42 @@ class _NavigationShellState extends State<NavigationShell>
             _userName = null;
           }
         });
-        if (user != null) _refreshStreak();
+        if (user != null) {
+          _refreshStreak();
+          _ensurePublicProfileFor(user);
+        } else {
+          // Signed out — let the next signed-in user re-ensure their mirror.
+          _publicProfileEnsuredUid = null;
+        }
       }
     });
+  }
+
+  /// Idempotently create/repair `public_profiles/{uid}` for [user], regardless
+  /// of how the session arrived (interactive sign-in, silent resume, restart).
+  ///
+  /// Runs at most once per uid per app session (guarded by
+  /// [_publicProfileEnsuredUid]) so repeated auth-state callbacks cannot cause
+  /// a write storm. Fire-and-forget: it never blocks app startup, and a failure
+  /// is logged and clears the guard so a later auth event can retry — it never
+  /// disturbs the auth session itself.
+  void _ensurePublicProfileFor(User user) {
+    if (_publicProfileEnsuredUid == user.uid) return;
+    _publicProfileEnsuredUid = user.uid;
+    unawaited(
+      _firestoreService
+          .ensurePublicProfileMirror(
+            user.uid,
+            name: user.displayName,
+            photoUrl: user.photoURL,
+          )
+          .catchError((Object e) {
+            debugPrint('ensurePublicProfileMirror (non-fatal): $e');
+            if (_publicProfileEnsuredUid == user.uid) {
+              _publicProfileEnsuredUid = null;
+            }
+          }),
+    );
   }
 
   Future<void> _initLocation() async {
@@ -1302,7 +1828,7 @@ class _NavigationShellState extends State<NavigationShell>
         // Start with default Jodhpur while GPS locks - small bounded query
         _startToiletStreamWithDefaultLocation();
       }
-      // Then update when fresh GPS arrives
+      // Then update when fresh GPS arrives.
       _positionSubscription =
           Geolocator.getPositionStream(
             locationSettings: const LocationSettings(
@@ -1310,19 +1836,24 @@ class _NavigationShellState extends State<NavigationShell>
               distanceFilter: 500,
             ),
           ).listen((pos) {
-            if (mounted) {
-              final bool moved =
-                  _userLat == null ||
-                  (pos.latitude - _userLat!).abs() > 0.01 ||
-                  (pos.longitude - _userLng!).abs() > 0.01;
-              if (moved) {
-                setState(() {
-                  _userLat = pos.latitude;
-                  _userLng = pos.longitude;
-                  _userPosition = pos;
-                });
-                _updateToiletStream();
-              }
+            if (!mounted) return;
+            // EVERY valid fix updates the current GO/widget
+            // position. A 500-900 m move must not be discarded from GO state
+            // just because it is below the MAP RECENTER threshold.
+            _userPosition = pos;
+            unawaited(_refreshGoWidget());
+
+            // Separately: only a large move recenters the map browsing stream.
+            final bool mapMoved =
+                _userLat == null ||
+                (pos.latitude - _userLat!).abs() > 0.01 ||
+                (pos.longitude - _userLng!).abs() > 0.01;
+            if (mapMoved) {
+              setState(() {
+                _userLat = pos.latitude;
+                _userLng = pos.longitude;
+              });
+              _updateToiletStream();
             }
           });
     } catch (e) {
@@ -1456,11 +1987,31 @@ class _NavigationShellState extends State<NavigationShell>
         '221425394665-9tsm7hmusivfh12la9htoogl8qeg4hdk.apps.googleusercontent.com',
   );
 
+  // True while a sign-in round-trip is running, so a second tap on the button
+  // cannot launch a parallel flow.
+  bool _signInInProgress = false;
+
   Future<void> _handleGoogleSignIn(BuildContext sheetContext) async {
+    if (_signInInProgress) return;
+    _signInInProgress = true;
     CustomHapticsService.playStepTransition(); // Emulate mechanical double-click for login button
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) return; // User cancelled the flow
+      if (googleUser == null) {
+        // `null` is ambiguous: it is returned BOTH on a genuine user
+        // cancellation AND when Google Play Services rejects the request
+        // before it can raise a PlatformException — most commonly because the
+        // installed APK's signing certificate (SHA-1) is not registered for
+        // this OAuth client / package (status 10, DEVELOPER_ERROR). We cannot
+        // reliably tell the two apart here, so we keep quiet in the UI (no
+        // scary error on a real cancel) but leave a breadcrumb in the log.
+        debugPrint(
+          'GoogleSignIn: signIn() returned null — user cancelled, OR a silent '
+          'configuration failure (e.g. status 10 DEVELOPER_ERROR: app '
+          'signing SHA-1 not registered for this package).',
+        );
+        return;
+      }
 
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
@@ -1482,6 +2033,10 @@ class _NavigationShellState extends State<NavigationShell>
           user.email ?? '',
           user.photoURL,
         );
+        // createOrUpdateUser has just written the FULL public projection, so
+        // mark the mirror ensured for this uid — the authStateChanges callback
+        // that follows must not fire a redundant second write.
+        _publicProfileEnsuredUid = user.uid;
 
         if (!mounted) {
           return;
@@ -1498,12 +2053,48 @@ class _NavigationShellState extends State<NavigationShell>
         showAppSnackBar("Welcome back, ${user.displayName ?? 'Explorer'}!");
         _onSignInSuccess?.call();
       }
+    } on PlatformException catch (e) {
+      // google_sign_in surfaces native failures here. e.code is the useful,
+      // non-secret signal — e.g. 'sign_in_failed' with details
+      // 'ApiException: 10' == DEVELOPER_ERROR (SHA-1 / OAuth client mismatch),
+      // 'network_error', etc. Never log tokens.
+      debugPrint(
+        'GoogleSignIn PlatformException: code=${e.code} '
+        'message=${e.message} details=${e.details}',
+      );
+      if (e.code == GoogleSignIn.kSignInCanceledError) {
+        return; // genuine cancel — say nothing
+      }
+      if (!mounted) return;
+      showAppSnackBar(
+        e.code == GoogleSignIn.kNetworkError
+            ? "No connection. Check your internet and try again."
+            : "Couldn't sign in with Google. Please try again.",
+        isError: true,
+      );
+    } on FirebaseAuthException catch (e) {
+      // Credential handed to Firebase but rejected (bad/expired token, disabled
+      // user, account-exists-with-different-credential, …).
+      debugPrint(
+        'FirebaseAuth signInWithCredential failed: code=${e.code} '
+        'message=${e.message}',
+      );
+      if (!mounted) return;
+      showAppSnackBar(
+        "Couldn't sign in with Google. Please try again.",
+        isError: true,
+      );
     } catch (e) {
-      debugPrint("Google Sign-In failed: $e");
+      debugPrint("Google Sign-In failed (unexpected): $e");
       if (!mounted) {
         return;
       }
-      showAppSnackBar("Google Sign-In failed: $e", isError: true);
+      showAppSnackBar(
+        "Couldn't sign in with Google. Please try again.",
+        isError: true,
+      );
+    } finally {
+      _signInInProgress = false;
     }
   }
 

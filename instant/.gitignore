@@ -1,0 +1,23 @@
+# ShauchMap Instant
+node_modules/
+dist/
+dev-dist/
+*.local
+
+# Real Firebase Web env — NEVER commit. Only .env.example is tracked.
+.env
+.env.local
+.env.*.local
+
+# Generated brain — rebuilt deterministically by `npm run build:core`.
+generated/shauchmap_core.js
+generated/shauchmap_core.js.deps
+generated/shauchmap_core.meta.json
+generated/oracle-result.json
+
+# Test / tooling output
+coverage/
+playwright-report/
+.vitest/
+*.log
+generated/perf-report.json

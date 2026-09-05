@@ -1,272 +1,103 @@
 <p align="center">
   <a href="https://github.com/YoDevStudio/ShauchMap/actions"><img src="https://img.shields.io/github/actions/workflow/status/YoDevStudio/ShauchMap/ci.yml?branch=main&style=for-the-badge&logo=github&label=build" alt="Build" /></a>
-  <img src="https://img.shields.io/badge/Flutter-3.x-02569B?style=for-the-badge&logo=flutter&logoColor=white" alt="Flutter" />
-  <img src="https://img.shields.io/badge/Firebase-Auth%20%C2%B7%20Firestore-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" alt="Firebase" />
-  <img src="https://img.shields.io/badge/Platform-Android-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android" />
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-11A06F?style=for-the-badge" alt="MIT License" /></a>
   <a href="https://github.com/YoDevStudio/ShauchMap/releases"><img src="https://img.shields.io/github/v/release/YoDevStudio/ShauchMap?style=for-the-badge&color=0F8A60" alt="Release" /></a>
 </p>
 
 <h1 align="center">ShauchMap — शौच Map</h1>
 
+<p align="center"><b>A PIN IS NOT A PROMISE.</b></p>
+
 <p align="center">
-  <b>Find the nearest open, community-verified public toilet in India — and get there in one tap.</b>
-  <br />
-  <sub>Freedom of movement, without fear.</sub>
+  A map can show where a toilet is listed. ShauchMap separates mapped facilities
+  from time-bounded condition evidence: strong, fresh evidence can shape the
+  recommendation, and where it's absent, ShauchMap falls back to the nearest
+  mapped option and says so — <b>Unknown</b> stays <b>Unknown</b>, never a guess.
 </p>
 
 <p align="center">
-  <a href="#-why-shauchmap">Why</a> ·
-  <a href="#-see-it-in-action">Demo</a> ·
-  <a href="#-features">Features</a> ·
-  <a href="#-screenshots">Screenshots</a> ·
-  <a href="#-the-scout-system">Scouts</a> ·
-  <a href="#-tech-stack">Tech</a> ·
-  <a href="#-architecture">Architecture</a> ·
-  <a href="#-getting-started">Get started</a> ·
-  <a href="#-permissions">Permissions</a> ·
-  <a href="#-roadmap">Roadmap</a> ·
-  <a href="#-contributing">Contribute</a>
+  <a href="https://shauchmap.web.app">Try ShauchMap Instant</a> ·
+  <a href="https://github.com/YoDevStudio/ShauchMap/releases">Download Android</a> ·
+  <a href="#how-shauchmap-is-different">How it works</a>
 </p>
-
-<br />
-
-> **⚡ The one thing to know:** press **GO** from anywhere in the app. ShauchMap finds the nearest *usable* toilet right now, previews it on a mini-map with the walking time, and hands you off to Google Maps. One tap to the answer, one more to the directions.
 
 <p align="center">
-  <img src="docs/mockups/02-go-card.png" width="280" alt="The GO experience" />
+  <img src="docs/media/android-go.png" width="280" alt="ShauchMap Android showing a real GO fallback result" />
+  <img src="docs/media/instant-go.png" width="280" alt="ShauchMap Instant showing the same real GO fallback result" />
 </p>
+<p align="center"><sub>Real production data, both surfaces. One decision model. Two access surfaces.</sub></p>
 
 ---
 
-## 🎬 See it in action
+## The problem
 
-<!-- ───────────────────────────────────────────────────────────────────────────
-     HOW GITHUB VIDEO ACTUALLY WORKS (read once, then you'll never fight it again):
-       • A committed file (docs/media/*.mp4) will NEVER play inline. Not by
-         relative path, not by raw URL. GitHub only plays videos that were
-         drag-dropped into the editor, which produces a
-         https://github.com/user-attachments/assets/<uuid> link.
-       • Free GitHub plan = 10 MB per upload. Compress each clip under 10 MB
-         first (see the ffmpeg one-liner in the fix guide) or the drop fails.
+A map pin can show where a toilet is listed. The pin by itself does not establish whether the facility is open, has water, or is usable right now. Most apps quietly treat "it's on the map" as if it meant "it's usable." For a public toilet, that gap is the whole problem.
 
-     TO ADD / REPLACE A CLIP:
-       1. Open this file on github.com and click the ✏️ pencil (edit).
-       2. Put your cursor on the blank line under the heading you want.
-       3. Drag the compressed .mp4 from your file explorer into the editor.
-       4. Wait for the upload bar; GitHub inserts the user-attachments link.
-       5. Commit. Done — it now plays inline for everyone.
-     ─────────────────────────────────────────────────────────────────────────── -->
+## How ShauchMap is different
 
-**⚡ The GO flow — nearest usable toilet, then Google Maps**
+ShauchMap separates three things that most apps blur into one — **Truth** (what's mapped), **Evidence** (what's actually known about current condition, and how fresh it is), and **GO** (one bounded decision policy over the full nearby candidate set, with a stated reason, never a guess dressed up as certainty). Ratings and votes are opinion signals with zero say in that decision; only time-bounded condition observations (open / water / usable / lock) carry current-condition authority, and they expire. Where the evidence is thin, ShauchMap says **Unknown** instead of inferring a status from the mapped record alone. Read the full model: [docs/truth-evidence-go.md](docs/truth-evidence-go.md).
 
+## Live products
 
+| | |
+| :-- | :-- |
+| **Android** | The native client — Google Sign-In, condition checks (the current-condition path), ratings and check-ins (opinion/bookkeeping, not condition authority), and the Scout system, all as tightly scoped, individually-owned contributions. [Download the latest release](https://github.com/YoDevStudio/ShauchMap/releases). |
+| **[ShauchMap Instant](https://shauchmap.web.app)** | A zero-install, read-only web companion. No account, no writes, no analytics, foreground location only (with your permission — GO needs it to find anything nearby). Built for the "I need one right now" case — a QR code, a shared link. See [docs/instant.md](docs/instant.md). |
 
-https://github.com/user-attachments/assets/69757eda-120c-4e90-91fb-5220c550a4ba
+One shared decision core ([`packages/shauchmap_core`](packages/shauchmap_core)). Two access surfaces.
 
+## Current production reality
 
+ShauchMap's production database currently holds approximately **7,741 toilet facility records**, mostly seeded from OpenStreetMap. They are *mapped*, not individually field-verified as a corpus — a pin means a facility was mapped; it does not by itself mean the facility is currently usable.
 
+Current-condition evidence is tracked entirely separately from the mapped record. **Ratings are opinion only** and **votes are opinion only** — neither carries any current-condition authority. The only current-condition authority is a **time-bounded condition observation** (open / water / usable / lock, each a plain yes/no/unknown tally with a strict-majority verdict), and it **expires** — once its validity window passes, it reverts to Unknown rather than lingering as stale-but-trusted data. For most facilities today, that condition evidence is sparse, and ShauchMap says **Unknown** rather than inferring a status from the mapped record alone. Where strong, fresh condition evidence isn't available for anywhere nearby, ShauchMap still returns its nearest mapped option and says plainly that it's doing so, rather than fabricating a confidence it doesn't have.
 
-**🔎 Smooth browsing & filtering**
+## Architecture
 
-https://github.com/user-attachments/assets/7c36781a-6607-4534-aeaf-88a529a31351
+Shared Truth/Evidence/GO logic in a single, independently-tested Dart package, consumed by both clients. Android is an authenticated contribution surface with tightly scoped, individually-owned writes — creating a new toilet record is currently denied server-side for every client, pending a minimum-supported-version enforcement mechanism (see [SECURITY.md](SECURITY.md) and `firestore.rules`). See [docs/architecture.md](docs/architecture.md) for the full diagram and layout.
 
+## Field validation
 
-**➕ Quick contribution wizard**
+A local, offline-first tool inside the Android app supports structured ground inspection of real facilities — separate from, and not a shortcut into, the consumer Evidence pipeline. The tooling and schema are ready; physical field collection has not yet been completed. See [docs/field-audit-method.md](docs/field-audit-method.md).
 
-https://github.com/user-attachments/assets/8706f3f0-ec22-448e-8852-95f638a568a9
+## Quality / testing
 
----
+Each layer is tested independently and the suites are real, not aspirational: the shared core (`dart test`), the Android app (`flutter test`), Instant (`vitest`), Firestore rules (an emulator-based allow/deny matrix), Cloud Functions (unit + emulator), and a native-Dart-vs-compiled-JS conformance check. All of it runs on every pull request in CI without needing production credentials — see [.github/workflows/ci.yml](.github/workflows/ci.yml).
 
-## 💚 Why ShauchMap
+## Privacy / security
 
-Finding a public toilet you can actually *use* in an Indian city is harder than it should be. Regular maps might show a pin — but not whether it's **open right now**, whether it has **water**, whether it's **free**, or whether it's **safe for women**. When you need one, you need it fast, and you need to trust it.
+See [PRIVACY.md](PRIVACY.md) and [SECURITY.md](SECURITY.md) — both cover Android and Instant, and both say plainly what is and isn't a secret rather than making blanket claims.
 
-ShauchMap answers exactly that question: **where is the nearest toilet I can use, right now?** It's built on 7,741 toilets seeded from OpenStreetMap and kept honest by the people who use them — every check-in, rating, and freshness signal makes the next person's answer better.
+## Development
 
-- 🎯 **Answer-first, not catalogue-first.** The app leads with *the* nearest usable toilet, not a wall of pins.
-- 🤝 **Community-verified.** Real check-ins and ratings, with freshness ("checked 2h ago") so you know it's current.
-- ♿ **Honest & inclusive.** Colour-blind-safe status (dot + word + icon, never colour alone), women-safe flags, accessibility tags.
-- 📴 **Works when the network doesn't.** Offline caching and a home-screen widget for the nearest loo.
-
----
-
-## ✨ Features
-
-<table>
-<tr>
-<td width="50%" valign="top">
-
-### ⚡ The GO button
-One button, reachable from every tab. Tap it and ShauchMap resolves your location, finds the nearest **open** toilet, shows it on a mini-map with distance and walk time, and hands off to Google Maps.
-
-### 🗺️ Map-first, orientation-first
-A full-bleed map that orients you — *which way, how far* — with live clustering over 7,741 toilets instead of a mess of loose pins. Floating search, quick filter chips, and a tall "nearest open toilet" peek card.
-
-### 🔎 Filters that matter
-**Open now · Free · Has water · Western · Women-safe** — the things that actually decide whether a toilet is usable for *you*.
-
-</td>
-<td width="50%" valign="top">
-
-### 🛡️ Trust signals
-Community check-ins, star ratings, and freshness decay so stale data fades. Bayesian/Wilson scoring keeps ratings fair, and likely-spam entries are hidden.
-
-### 🎖️ The Scout system
-Turn civic contribution into a game. Earn XP for adding and verifying toilets, climb the ranks, and top the weekly leaderboard.
-
-### ➕ Contribute in under a minute
-Long-press **GO** (or tap **Add** on your profile), drop a pin, tag what's there, done. Only the location is required — skip anything you don't know.
-
-</td>
-</tr>
-</table>
-
-<details>
-<summary><b>More under the hood</b></summary>
-
-- **Home-screen widget** — the nearest open toilet, refreshed in the background via WorkManager.
-- **Deep links** — `shauchmap://emergency` (nearest-loo flow) and `shauchmap://navigate?toiletId=…`.
-- **Custom haptics** — a tuned feedback channel for taps, toggles, and success.
-- **Crash reporting** — Firebase Crashlytics wired for both Flutter and async errors.
-- **A real design system** — layered neutral elevation, semantic status tones, tabular hero numbers, and a token layer (`context.sm.*`) that drives every screen.
-
-</details>
-
----
-
-## 📱 Screenshots
-
-<p align="center">
-  <img src="docs/mockups/01-map.png"    width="30%" alt="Map — nearest open toilet" />
-  <img src="docs/mockups/02-go-card.png" width="30%" alt="GO — nearest usable, right now" />
-  <img src="docs/mockups/03-detail.png"  width="30%" alt="Toilet detail — amenities and trust" />
-</p>
-<p align="center">
-  <img src="docs/mockups/04-browse.png"  width="30%" alt="Browse — nearby, sorted by distance" />
-  <img src="docs/mockups/05-add.png"     width="30%" alt="Add a toilet in under a minute" />
-  <img src="docs/mockups/06-you.png"     width="30%" alt="You — scout profile and leaderboard" />
-</p>
-
----
-
-## 🎖️ The Scout system
-
-Every contribution is civic data that helps the next person. ShauchMap rewards it.
-
-| Action | Reward |
-| :--- | :---: |
-| ➕ Add a toilet | **+50 XP** |
-| ✅ Quick status check | **+15 XP** |
-| ⭐ Rate a toilet | **+10 XP** |
-
-**Ranks:** Loo Scout `0–99` → Hygiene Hero `100–499` → City Guardian `500–999` → Swachh Legend `1000+`
-
-Verify a toilet five times and you become a **Warden** for it. Women-safe flags expire after 24h so they stay current; repeated reports auto-flag bad entries for review. A weekly leaderboard on your profile keeps it friendly.
-
----
-
-## 🧱 Tech stack
-
-| Layer | Tech |
-| :--- | :--- |
-| **Framework** | Flutter · Dart 3 |
-| **Backend** | Firebase — Auth (Google Sign-In) · Cloud Firestore · Crashlytics |
-| **Maps & geo** | Google Maps SDK · `geoflutterfire_plus` (geohash queries) · Geolocator · Geocoding · Flutter Compass |
-| **Platform** | WorkManager (background sync) · `home_widget` · `app_links` (deep links) · `flutter_local_notifications` |
-| **State & storage** | `shared_preferences` · offline Firestore persistence |
-| **Design** | Custom design-token system · `shimmer` skeletons · tuned haptics channel |
-
----
-
-## 🏗️ Architecture
-
-ShauchMap keeps a strict split between a **presentation layer** (a token-driven design system) and a **logic layer** that's small, tested, and reused everywhere.
-
-- **Design tokens** (`lib/theme/`) — colours, type, spacing, shadows, and reusable components accessed via `context.sm.<token>`. Screens compose tokens; they never hardcode values. Light is the default theme (tuned for outdoor sun); dark is fully supported.
-- **Geo queries** — toilets are indexed by geohash and fetched with `geoflutterfire_plus` bounded to a radius around the user, so the app never pulls all 7,741 records at once.
-- **The GO flow** — a single entry point resolves GPS (with a cold-start safety gate), finds the nearest open toilet, previews it, and deep-links to Google Maps rather than reinventing turn-by-turn.
-
-```
-lib/
-├── screens/     # Map, GO, Detail, Browse, Add wizard, You, Onboarding
-├── theme/       # Design tokens + reusable SmWidgets
-├── services/    # Firestore, haptics, notifications, orientation
-├── logic/       # Trust/rating math (Bayesian, Wilson, freshness)
-├── widgets/     # Shared UI (states, bouncy tap, …)
-└── utils/       # Map launcher, helpers
-```
-
----
-
-## 🚀 Getting started
-
-### Option A — just use it
-Grab the latest signed APK from the [**Releases**](https://github.com/YoDevStudio/ShauchMap/releases) page and install it on any Android device.
-
-### Option B — build it yourself
+The fastest way to run something from a clean clone needs no secrets at all — ShauchMap Instant in fixture mode:
 
 ```bash
-# 1. Clone
 git clone https://github.com/YoDevStudio/ShauchMap.git
-cd ShauchMap
-
-# 2. Install deps
-flutter pub get
-
-# 3. Provide your own keys (never commit them — see below)
-cp .env.example .env   # then fill in your values
-
-# 4. Run with your Places API key injected at build time
-flutter run --dart-define=PLACES_API_KEY=your_key_here
+cd ShauchMap/instant
+npm ci
+npm run dev              # fixture mode — no Firebase project needed
 ```
 
-**You must provide your own keys.** This repo ships **no** secrets. You'll need:
-- A **Firebase** project (`flutterfire configure` generates `firebase_options.dart` and the Android config).
-- A **Google Maps / Places** API key (injected via `--dart-define=PLACES_API_KEY=…`, never hardcoded).
+The Android app needs your own Firebase project and your own Google Maps SDK key — this repo ships no secrets and none should ever be committed. Full setup for both surfaces, plus Firestore rules/Cloud Functions, is in [CONTRIBUTING.md](CONTRIBUTING.md).
 
-> ⚠️ **Forking?** Read [`SECURITY.md`](SECURITY.md). If you ship a build, use *your own* restricted keys and keystore. Do not reuse anyone else's.
+## Known limitations
 
----
+- Most of the ~7,741 seeded toilet locations have no community condition evidence attached yet — expected, and disclosed rather than hidden.
+- Creating a new toilet record (Add-Toilet) is currently denied server-side for every client, pending a minimum-supported-version enforcement mechanism.
+- Search finds toilets already loaded into the app by name or address; there is no general city/area lookup.
+- Native client currently targets Android.
 
-## 🔐 Permissions
+## Data sources / attribution
 
-ShauchMap asks only for what it needs, and tells you why.
+Toilet location data includes **© OpenStreetMap contributors**, available under the Open Database License. See [docs/data-sources.md](docs/data-sources.md) for the full attribution and what this repository does and doesn't distribute.
 
-| Permission | Why |
-| :--- | :--- |
-| **Location** | To find toilets near you and show your position on the map. Never sold, never shared. |
-| **Internet** | To load the map and sync community data. |
-| **Camera** | Reserved for photo contributions (arriving in v1.1). |
-| **Notifications** | Optional nudges to rate a toilet after you visit. |
+## Contributing
 
----
+Two ways to help: report a stable data problem (wrong location, duplicate, a facility that's permanently gone) via the [data report issue template](https://github.com/YoDevStudio/ShauchMap/issues/new?template=toilet_data.yml), or contribute code. GitHub Issues are not a live current-condition channel — see [CONTRIBUTING.md](CONTRIBUTING.md) for the distinction and the full contributor path. By participating you agree to our [Code of Conduct](CODE_OF_CONDUCT.md).
 
-## 🗺️ Roadmap
+## License
 
-- [ ] 📷 Photos on toilets (the slot is already reserved in the Add flow)
-- [ ] 🇮🇳 Hindi & regional localization (English-only in v1.0)
-- [ ] 🔎 Dedicated area/landmark search screen
-- [ ] 📈 "People helped" impact metric on your profile
-- [ ] 🍎 iOS build
+[MIT](LICENSE) © [YoDevStudio](https://github.com/YoDevStudio).
 
-See [open issues](https://github.com/YoDevStudio/ShauchMap/issues) and [discussions](https://github.com/YoDevStudio/ShauchMap/discussions) for what's being worked on.
-
----
-
-## 🤝 Contributing
-
-Two ways to help, both valuable:
-
-1. **Add toilet data.** The most useful thing you can do — open the app, add or verify toilets in your city.
-2. **Contribute code.** Read [`CONTRIBUTING.md`](CONTRIBUTING.md), pick an issue, and open a PR. First-timers welcome.
-
-By participating you agree to our [Code of Conduct](CODE_OF_CONDUCT.md).
-
----
-
-## 📄 License
-
-[MIT](LICENSE) © [YoDevStudio](https://github.com/YoDevStudio). Use it, learn from it, build on it.
-
-<p align="center"><sub>Built with 💚 in Jodhpur, Rajasthan — so no one has to search when it matters most.</sub></p>
+<p align="center"><sub>Built in Jodhpur, Rajasthan.</sub></p>

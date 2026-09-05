@@ -3,10 +3,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:speech_to_text/speech_to_text.dart';
-import 'dart:async';
 
 import '../services/firestore_service.dart';
-import '../services/places_service.dart';
+import '../widgets/evidence_status_label.dart';
 import 'detail_sheet.dart';
 import '../services/custom_haptics_service.dart';
 import '../services/error_handler.dart';
@@ -61,11 +60,12 @@ class _ListScreenState extends State<ListScreen> {
   int _displayLimit = 20;
   bool _isLoadingMore = false;
 
-  bool _filterOnlyOpen = false;
-  bool _filterOnlyFree = false;
-  bool _filterOnlyWestern = false;
+  // honesty pass: the only filter kept is "Water listed" — it selects
+  // toilets whose SOURCE positively listed water (`has_water == true`), which is
+  // real positive evidence. "Open now" / "Free" / "Western" / "Women-safe" were
+  // removed: with the current dataset they filter on importer defaults and
+  // missing fields, turning "unknown" into a false "no".
   bool _filterOnlyWater = false;
-  bool _filterOnlyWomenSafe = false;
 
   @override
   void initState() {
@@ -126,142 +126,19 @@ class _ListScreenState extends State<ListScreen> {
     await prefs.setStringList('recent_searches', _recentSearches);
   }
 
-  Timer? _debounce;
-  List<PlacePrediction> _predictions = [];
-
-  // In-sheet place results (searchMode only)
-  String? _viewingPlace;
-  List<Toilet> _placeToilets = [];
-  StreamSubscription<List<Toilet>>? _placeSub;
-  bool _placeLoading = false;
-
+  // Search is local-only: it filters `widget.toilets` (name + address) as you
+  // type — see `displayedToilets` in build(). There is no place-lookup
+  // network call here; to browse a different area, pan the map and use its
+  // own "Search this area" control (see map_screen.dart), which re-centers
+  // the query on the map's current viewport instead of a typed address.
   void _onSearchChanged(String query) {
     setState(() => _searchQuery = query.toLowerCase().trim());
-    if (widget.onSearchLocationUpdate == null) return;
-
-    if (_debounce?.isActive ?? false) _debounce!.cancel();
-
-    if (query.trim().isEmpty) {
-      setState(() {
-        _predictions = [];
-      });
-      return;
-    }
-
-    _debounce = Timer(const Duration(milliseconds: 300), () async {
-      try {
-        final results = await PlacesService.getAutocomplete(query);
-        if (mounted) {
-          setState(() {
-            _predictions = results;
-          });
-        }
-      } catch (e) {
-        // Handle error silently or log it
-      }
-    });
   }
 
-  void _onPlaceSelected(PlacePrediction prediction) async {
-    CustomHapticsService.playTileSelect();
-    _searchFocusNode.unfocus();
-    _searchController.clear();
-    setState(() {
-      _searchQuery = '';
-      _predictions = [];
-    });
-
-    try {
-      final loc = await PlacesService.getPlaceLocation(prediction.placeId);
-      if (loc == null) return;
-      _addRecentSearch(prediction.description);
-
-      if (widget.searchMode) {
-        // Stay in-sheet: load toilets for this place without recentering the map
-        setState(() {
-          _viewingPlace = prediction.description;
-          _placeLoading = true;
-          _placeToilets = [];
-        });
-        _placeSub?.cancel();
-        _placeSub = widget.firestoreService
-            .getToiletsNearby(
-              latitude: loc.lat,
-              longitude: loc.lng,
-              radiusKm: 15.0,
-            )
-            .listen((list) {
-              if (mounted) {
-                setState(() {
-                  _placeToilets = list;
-                  _placeLoading = false;
-                });
-              }
-            });
-      } else if (widget.onSearchLocationUpdate != null) {
-        widget.onSearchLocationUpdate!(
-          prediction.description,
-          loc.lat,
-          loc.lng,
-        );
-      }
-    } catch (e) {
-      if (mounted) AppError.show(context, 'Failed to resolve location');
-    }
-  }
-
-  void _clearPlaceResults() {
-    _placeSub?.cancel();
-    setState(() {
-      _viewingPlace = null;
-      _placeToilets = [];
-      _placeLoading = false;
-    });
-    CustomHapticsService.playToggleSnap();
-  }
-
-  void _onSearchSubmitted(String query) async {
+  void _onSearchSubmitted(String query) {
     if (query.trim().isEmpty) return;
-    try {
-      final loc = await PlacesService.geocodeAddress(query);
-      if (loc != null) {
-        _addRecentSearch(query);
-        CustomHapticsService.playTileSelect();
-        _searchController.clear();
-        setState(() {
-          _searchQuery = '';
-          _predictions = [];
-        });
-        _searchFocusNode.unfocus();
-
-        if (widget.searchMode) {
-          setState(() {
-            _viewingPlace = query;
-            _placeLoading = true;
-            _placeToilets = [];
-          });
-          _placeSub?.cancel();
-          _placeSub = widget.firestoreService
-              .getToiletsNearby(
-                latitude: loc.lat,
-                longitude: loc.lng,
-                radiusKm: 15.0,
-              )
-              .listen((list) {
-                if (mounted) {
-                  setState(() {
-                    _placeToilets = list;
-                    _placeLoading = false;
-                  });
-                }
-              });
-        } else if (widget.onSearchLocationUpdate != null) {
-          widget.onSearchLocationUpdate!(query, loc.lat, loc.lng);
-        }
-      }
-    } catch (e) {
-      // Ignore
-    }
+    _addRecentSearch(query);
+    _searchFocusNode.unfocus();
   }
 
   void _startListening() async {
@@ -321,8 +198,6 @@ class _ListScreenState extends State<ListScreen> {
     _speechToText.stop();
     _scrollController.dispose();
     _searchFocusNode.dispose();
-    _debounce?.cancel();
-    _placeSub?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -349,53 +224,38 @@ class _ListScreenState extends State<ListScreen> {
     );
   }
 
-  IconData _typeIcon(String category) {
-    switch (category.toLowerCase()) {
-      case 'petrol pump':
-      case 'fuel':
+  // Icon comes from the identity-truth CONTEXT, not the raw `category` string
+  // (base OSM rows are all hard-coded 'govt'). Unknown => a generic toilet pin.
+  IconData _contextIcon(FacilityContext c) {
+    switch (c) {
+      case FacilityContext.petrolStation:
         return Icons.local_gas_station_outlined;
-      case 'mall':
-      case 'shop':
-      case 'commercial':
+      case FacilityContext.commercial:
         return Icons.shopping_bag_outlined;
-      case 'station':
-      case 'railway':
+      case FacilityContext.station:
         return Icons.train_outlined;
-      default:
-        return Icons.location_city_outlined;
+      case FacilityContext.publicToilet:
+      case FacilityContext.other:
+      case FacilityContext.unknown:
+        return Icons.wc_outlined;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // When viewing a searched place in searchMode, use those toilets; otherwise use widget.toilets
-    final List<Toilet> sourceToilets =
-        (widget.searchMode && _viewingPlace != null)
-        ? _placeToilets
-        : widget.toilets;
-
-    final List<Toilet> displayedToilets = sourceToilets.where((t) {
+    final List<Toilet> displayedToilets = widget.toilets.where((t) {
       if (_searchQuery.isNotEmpty) {
         final q = _searchQuery.toLowerCase();
+        // Name + address only. The raw `category` is NOT searched — base OSM
+        // rows are all hard-coded 'govt', so matching it would make every
+        // imported toilet a false hit for "government".
         if (!t.name.toLowerCase().contains(q) &&
-            !t.address.toLowerCase().contains(q) &&
-            !t.category.toLowerCase().contains(q)) {
+            !t.address.toLowerCase().contains(q)) {
           return false;
         }
       }
-      if (_filterOnlyOpen && !t.isOpen) {
-        return false;
-      }
-      if (_filterOnlyFree && !t.isFree) {
-        return false;
-      }
-      if (_filterOnlyWestern && !t.isWestern) {
-        return false;
-      }
-      if (_filterOnlyWater && !t.hasWater) {
-        return false;
-      }
-      if (_filterOnlyWomenSafe && !t.isWomenSafe) {
+      if (_filterOnlyWater &&
+          t.truth.amenities.water != EvidenceState.present) {
         return false;
       }
       return true;
@@ -423,7 +283,7 @@ class _ListScreenState extends State<ListScreen> {
                 onChanged: _onSearchChanged,
                 onSubmitted: _onSearchSubmitted,
                 decoration: InputDecoration(
-                  hintText: 'Search by name or area...',
+                  hintText: 'Search loaded toilets by name or address',
                   hintStyle: SmText.body.copyWith(color: context.sm.ink3),
                   prefixIcon: Icon(
                     Icons.search_rounded,
@@ -492,73 +352,8 @@ class _ListScreenState extends State<ListScreen> {
               ),
             ),
 
-          // SEARCH MODE: "Viewing X ✕" banner when a place is selected
-          if (widget.searchMode && _viewingPlace != null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                SmTokens.s16,
-                SmTokens.s4,
-                SmTokens.s16,
-                SmTokens.s4,
-              ),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: SmTokens.s12,
-                  vertical: SmTokens.s8,
-                ),
-                decoration: BoxDecoration(
-                  color: context.sm.brand.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(SmTokens.rSmall),
-                  border: Border.all(
-                    color: context.sm.brand.withValues(alpha: 0.25),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.location_on, color: context.sm.brand, size: 14),
-                    const SizedBox(width: SmTokens.s8),
-                    Expanded(
-                      child: Text(
-                        'Viewing $_viewingPlace',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: SmText.caption.copyWith(
-                          color: context.sm.brand,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: _clearPlaceResults,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: SmTokens.s8),
-                        child: Icon(
-                          Icons.close_rounded,
-                          color: context.sm.brand,
-                          size: 16,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-          // SEARCH MODE: loading indicator for place toilets
-          if (widget.searchMode && _placeLoading)
-            Padding(
-              padding: const EdgeInsets.all(SmTokens.s24),
-              child: Center(
-                child: CircularProgressIndicator(
-                  color: context.sm.brandSolid,
-                  strokeWidth: 2,
-                ),
-              ),
-            ),
-
           // SEARCH MODE: recent searches dropdown
           if (widget.searchMode &&
-              _viewingPlace == null &&
               _searchFocusNode.hasFocus &&
               _searchQuery.isEmpty &&
               _recentSearches.isNotEmpty)
@@ -589,37 +384,6 @@ class _ListScreenState extends State<ListScreen> {
                         _onSearchSubmitted(term);
                         _searchFocusNode.unfocus();
                       },
-                    );
-                  },
-                ),
-              ),
-            )
-          // SEARCH MODE: autocomplete predictions
-          else if (widget.searchMode &&
-              _viewingPlace == null &&
-              _predictions.isNotEmpty)
-            Container(
-              margin: const EdgeInsets.symmetric(
-                horizontal: SmTokens.s16,
-                vertical: SmTokens.s4,
-              ),
-              child: SmCard(
-                padding: EdgeInsets.zero,
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _predictions.length,
-                  separatorBuilder: (context, index) =>
-                      Divider(color: context.sm.line, height: 1.0),
-                  itemBuilder: (context, index) {
-                    final p = _predictions[index];
-                    return ListTile(
-                      leading: Icon(Icons.location_on, color: context.sm.brand),
-                      title: Text(
-                        p.description,
-                        style: SmText.body.copyWith(color: context.sm.ink),
-                      ),
-                      onTap: () => _onPlaceSelected(p),
                     );
                   },
                 ),
@@ -710,40 +474,11 @@ class _ListScreenState extends State<ListScreen> {
               child: Row(
                 children: [
                   SmFilterChip(
-                    label: 'Open now',
-                    selected: _filterOnlyOpen,
-                    onTap: () =>
-                        setState(() => _filterOnlyOpen = !_filterOnlyOpen),
-                  ),
-                  const SizedBox(width: SmTokens.s8),
-                  SmFilterChip(
-                    label: 'Free',
-                    selected: _filterOnlyFree,
-                    onTap: () =>
-                        setState(() => _filterOnlyFree = !_filterOnlyFree),
-                  ),
-                  const SizedBox(width: SmTokens.s8),
-                  SmFilterChip(
-                    label: 'Western',
-                    selected: _filterOnlyWestern,
-                    onTap: () => setState(
-                      () => _filterOnlyWestern = !_filterOnlyWestern,
-                    ),
-                  ),
-                  const SizedBox(width: SmTokens.s8),
-                  SmFilterChip(
-                    label: 'Has water',
+                    label: 'Water listed',
+                    icon: Icons.water_drop_outlined,
                     selected: _filterOnlyWater,
                     onTap: () =>
                         setState(() => _filterOnlyWater = !_filterOnlyWater),
-                  ),
-                  const SizedBox(width: SmTokens.s8),
-                  SmFilterChip(
-                    label: 'Women-safe',
-                    selected: _filterOnlyWomenSafe,
-                    onTap: () => setState(
-                      () => _filterOnlyWomenSafe = !_filterOnlyWomenSafe,
-                    ),
                   ),
                 ],
               ),
@@ -751,12 +486,7 @@ class _ListScreenState extends State<ListScreen> {
 
           Expanded(
             child: displayedToilets.isEmpty
-                ? (_searchQuery.isNotEmpty ||
-                          _filterOnlyOpen ||
-                          _filterOnlyFree ||
-                          _filterOnlyWestern ||
-                          _filterOnlyWater ||
-                          _filterOnlyWomenSafe
+                ? (_searchQuery.isNotEmpty || _filterOnlyWater
                       ? Center(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
@@ -846,6 +576,7 @@ class _ListScreenState extends State<ListScreen> {
                           const SizedBox(height: SmTokens.s12),
                       itemBuilder: (context, index) {
                         final toilet = displayedToilets[index];
+                        final pt = ToiletPresentation.fromEvidence(toilet);
                         return SmCard(
                           onTap: () {
                             CustomHapticsService.playTileSelect();
@@ -864,7 +595,7 @@ class _ListScreenState extends State<ListScreen> {
                                 ),
                                 child: Center(
                                   child: Icon(
-                                    _typeIcon(toilet.category),
+                                    _contextIcon(pt.context),
                                     color: context.sm.ink2,
                                     size: 20,
                                   ),
@@ -886,31 +617,36 @@ class _ListScreenState extends State<ListScreen> {
                                     const SizedBox(height: SmTokens.s4),
                                     Row(
                                       children: [
-                                        SmStatusLabel(
-                                          toilet.isOpen
-                                              ? SmStatus.open
-                                              : SmStatus.closed,
-                                          text: toilet.isOpen
-                                              ? 'Open'
-                                              : 'Closed',
-                                        ),
+                                        // Self-expiring: only a CURRENT
+                                        // server-derived condition summary
+                                        // (Evidence V2) moves this off "Status
+                                        // unconfirmed", and it drops back when
+                                        // the evidence window passes (no
+                                        // polling).
+                                        EvidenceStatusLabel(toilet),
                                         const SizedBox(width: SmTokens.s8),
-                                        if (toilet.hasWater)
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                              right: SmTokens.s4,
-                                            ),
-                                            child: Icon(
-                                              Icons.water_drop_outlined,
-                                              size: 14,
-                                              color: context.sm.ink3,
-                                            ),
-                                          ),
-                                        if (toilet.isFree)
-                                          Icon(
-                                            Icons.money_off_outlined,
-                                            size: 14,
-                                            color: context.sm.ink3,
+                                        // Only a POSITIVE source/submitter
+                                        // listing is shown (Truth V2); a stored
+                                        // `false` / missing means "not
+                                        // confirmed", not "no water".
+                                        if (toilet.truth.amenities.water ==
+                                            EvidenceState.present)
+                                          Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.water_drop_outlined,
+                                                size: 14,
+                                                color: context.sm.ink3,
+                                              ),
+                                              const SizedBox(width: 2),
+                                              Text(
+                                                'Water listed',
+                                                style: SmText.caption.copyWith(
+                                                  color: context.sm.ink3,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                       ],
                                     ),
@@ -925,23 +661,20 @@ class _ListScreenState extends State<ListScreen> {
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                     ],
-                                    const SizedBox(height: SmTokens.s4),
-                                    if (toilet.starRating > 0)
+                                    // Ratings come from the SERVER-DERIVED
+                                    // index (Evidence V2), never the frozen
+                                    // parent aggregate. null => not indexed
+                                    // (show nothing); "No ratings yet" => a
+                                    // real indexed zero.
+                                    if (pt.ratingsLabel != null) ...[
+                                      const SizedBox(height: SmTokens.s4),
                                       Text(
-                                        '\u2605 ${toilet.starRating.toStringAsFixed(1)}',
+                                        pt.ratingsLabel!,
                                         style: SmText.caption.copyWith(
-                                          color: context.sm.star,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      )
-                                    else
-                                      Text(
-                                        'Not rated \u00B7 be the first +10 XP',
-                                        style: SmText.caption.copyWith(
-                                          color: context.sm.brand,
-                                          fontWeight: FontWeight.w700,
+                                          color: context.sm.ink3,
                                         ),
                                       ),
+                                    ],
                                   ],
                                 ),
                               ),
