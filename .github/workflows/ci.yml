@@ -48,6 +48,13 @@ jobs:
         # and exists so static analysis and unit tests have something to
         # import; it's never used for an actual Android build/assemble.
         run: cp lib/firebase_options.ci-fixture.dart lib/firebase_options.dart
+      - name: Resolve shared core dependencies
+        # Root `flutter analyze` walks packages/shauchmap_core/, whose own
+        # dev_dependencies (package:test) are not resolved by the root
+        # `flutter pub get`. Resolve them explicitly so a clean checkout is
+        # valid without relying on local package state.
+        working-directory: packages/shauchmap_core
+        run: dart pub get
       - run: flutter pub get
       - run: flutter analyze
       - run: flutter test
@@ -65,11 +72,19 @@ jobs:
         working-directory: instant
     steps:
       - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
           cache-dependency-path: instant/package-lock.json
+      - name: Resolve shared core dependencies
+        # `npm run build:core` runs `dart compile js` against
+        # packages/shauchmap_core; a clean checkout has no resolved package
+        # config for it. Resolve it (and provision Dart, above) so the web
+        # core compilation works without local package state.
+        working-directory: packages/shauchmap_core
+        run: dart pub get
       - run: npm ci
       - run: npm run build:core
       - run: npm run typecheck
@@ -92,6 +107,12 @@ jobs:
           node-version: 20
           cache: npm
           cache-dependency-path: instant/package-lock.json
+      - name: Resolve shared core dependencies
+        # `npm run build:core` compiles packages/shauchmap_core via
+        # `dart compile js`; resolve its package config first so a clean
+        # checkout can find `package:shauchmap_core/...`.
+        working-directory: packages/shauchmap_core
+        run: dart pub get
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run build:core
