@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 660" width="1000" height="660" font-family="-apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" role="img" aria-label="ShauchMap architecture: a shared Dart core (Truth, Evidence, GO) consumed by Android and Instant, over Cloud Firestore with scoped Rules; Cloud Functions are triggered by writes and persist trusted derived evidence back into Firestore.">
+  <!-- self-contained card so the diagram reads on both light and dark GitHub themes -->
+  <rect x="1" y="1" width="998" height="658" rx="22" fill="#FBFAF6" stroke="#E3E0D6" stroke-width="2"/>
+
+  <defs>
+    <style>
+      .box   { fill:#F1F6F2; stroke:#CBE1D4; stroke-width:2; }
+      .core  { fill:#EAF4EE; stroke:#8FC7A6; stroke-width:2.5; }
+      .h     { fill:#14352A; font-weight:700; }
+      .sub   { fill:#4B6157; font-weight:400; }
+      .note  { fill:#6C7A72; font-weight:400; font-style:italic; }
+      .cap   { fill:#1F9D57; font-weight:700; letter-spacing:2px; }
+      .link  { stroke:#1F9D57; stroke-width:2.5; fill:none; }
+      .back  { stroke:#1F9D57; stroke-width:2.5; fill:none; stroke-dasharray:6 5; }
+      .backlbl { fill:#1F9D57; font-weight:600; }
+    </style>
+    <marker id="ar11" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#1F9D57"/>
+    </marker>
+  </defs>
+
+  <text x="500" y="52" text-anchor="middle" font-size="15" class="cap">SHAUCHMAP ARCHITECTURE</text>
+
+  <!-- shared core -->
+  <rect class="core" x="300" y="80" width="400" height="88" rx="16"/>
+  <text x="500" y="118" text-anchor="middle" font-size="21" class="h">Shared Dart core</text>
+  <text x="500" y="146" text-anchor="middle" font-size="15" class="sub">Truth &#183; Evidence &#183; GO</text>
+
+  <!-- links core -> clients -->
+  <path class="link" d="M420 168 C 420 210, 300 210, 300 244" marker-end="url(#ar11)"/>
+  <path class="link" d="M580 168 C 580 210, 700 210, 700 244" marker-end="url(#ar11)"/>
+
+  <!-- Android -->
+  <rect class="box" x="150" y="246" width="300" height="82" rx="14"/>
+  <text x="300" y="281" text-anchor="middle" font-size="18" class="h">Android</text>
+  <text x="300" y="307" text-anchor="middle" font-size="13.5" class="note">Authenticated contributions</text>
+
+  <!-- Instant -->
+  <rect class="box" x="550" y="246" width="300" height="82" rx="14"/>
+  <text x="700" y="281" text-anchor="middle" font-size="18" class="h">Instant</text>
+  <text x="700" y="307" text-anchor="middle" font-size="13.5" class="note">Read-only</text>
+
+  <!-- links clients -> firestore -->
+  <path class="link" d="M300 328 C 300 372, 500 372, 500 408" marker-end="url(#ar11)"/>
+  <path class="link" d="M700 328 C 700 372, 500 372, 500 408" marker-end="url(#ar11)"/>
+
+  <!-- Firestore -->
+  <rect class="box" x="330" y="410" width="340" height="82" rx="14"/>
+  <text x="500" y="445" text-anchor="middle" font-size="18" class="h">Cloud Firestore</text>
+  <text x="500" y="471" text-anchor="middle" font-size="13.5" class="note">Firestore Rules &#8212; scoped client access</text>
+
+  <!-- trigger down: firestore write -> functions -->
+  <path class="link" d="M470 492 L 470 536" marker-end="url(#ar11)"/>
+  <text x="455" y="518" text-anchor="end" font-size="12" class="note">on write</text>
+
+  <!-- return up: functions persist trusted derived evidence back into firestore -->
+  <path class="back" d="M600 538 C 760 512, 760 420, 672 448" marker-end="url(#ar11)"/>
+  <text x="775" y="497" text-anchor="start" font-size="12.5" class="backlbl">trusted derived</text>
+  <text x="775" y="514" text-anchor="start" font-size="12.5" class="backlbl">evidence</text>
+
+  <!-- Functions -->
+  <rect class="box" x="320" y="538" width="360" height="82" rx="14"/>
+  <text x="500" y="573" text-anchor="middle" font-size="18" class="h">Trusted Cloud Functions</text>
+  <text x="500" y="599" text-anchor="middle" font-size="13.5" class="note">Derive trusted evidence from accepted writes</text>
+</svg>
